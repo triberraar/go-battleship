@@ -58,7 +58,7 @@ var upgrader = websocket.Upgrader{
 		return true
 	}} // use default options
 
-func echo(w http.ResponseWriter, r *http.Request) {
+func battleship(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
@@ -110,9 +110,9 @@ func main() {
 	}
 	flag.Parse()
 	log.SetFlags(0)
-	http.HandleFunc("/echo", echo)
 	router := mux.NewRouter()
-	router.HandleFunc("/echo", echo)
-	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("assets/"))))
+	router.HandleFunc("/battleship", battleship)
+	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
+	log.Printf("Server listening on %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
