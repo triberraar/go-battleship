@@ -19,7 +19,7 @@ Run the whole thing by executing `./bin/go-battleship`
 To develop you need to run two servers. One runs and watches the frontend code, the other one runs the go server
 
 Run the ui by running `npm run watch` in the ui folder. This will run a server on port 100001.
-Run the backend by running `go run ./cmd/battleship/` in the root folder. This will run a server on port 100002.
+Run the backend by running `go run ./cmd/go-battleship/` in the root folder. This will run a server on port 100002.
 
 ## How to deploy
 

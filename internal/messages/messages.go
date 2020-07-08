@@ -12,13 +12,13 @@ type Coordinate struct {
 }
 
 // HitMessage send to player when he hits stuff
-type HitMessage struct {
+type hitMessage struct {
 	Type       string     `json:"type"`
 	Coordinate Coordinate `json:"coordinate"`
 }
 
 // MissMessage send to player when he misses stuff
-type MissMessage struct {
+type missMessage struct {
 	Type       string     `json:"type"`
 	Coordinate Coordinate `json:"coordinate"`
 }
@@ -27,4 +27,20 @@ type MissMessage struct {
 type FireMessage struct {
 	Type       string     `json:"type"`
 	Coordinate Coordinate `json:"coordinate"`
+}
+
+// NewHitMessage constructor function
+func NewHitMessage(coordinate Coordinate) hitMessage {
+	return hitMessage{
+		Type:       "HIT",
+		Coordinate: coordinate,
+	}
+}
+
+// NewMissMessage constructor function
+func NewMissMessage(coordinate Coordinate) missMessage {
+	return missMessage{
+		Type:       "MISS",
+		Coordinate: coordinate,
+	}
 }

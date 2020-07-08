@@ -1,13 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/triberraar/go-battleship/internal/messages"
+	gl "github.com/triberraar/go-battleship/internal/game_logic"
 )
 
 var upgrader = websocket.Upgrader{
@@ -23,33 +21,5 @@ func Battleship(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.Close()
-	for {
-		bm := messages.BaseMessage{}
-		_, message, _ := c.ReadMessage()
-		json.Unmarshal(message, &bm)
-		if bm.Type == "FIRE" {
-			fm := messages.FireMessage{}
-			json.Unmarshal(message, &fm)
-			fmt.Printf("%+v\n", fm)
-			if fm.Coordinate.X%2 == 0 {
-				c.WriteJSON(newHitMessage(fm.Coordinate))
-			} else {
-				c.WriteJSON(newMissMessage(fm.Coordinate))
-			}
-		}
-	}
-}
-
-func newHitMessage(coordinate messages.Coordinate) messages.HitMessage {
-	return messages.HitMessage{
-		Type:       "HIT",
-		Coordinate: coordinate,
-	}
-}
-
-func newMissMessage(coordinate messages.Coordinate) messages.MissMessage {
-	return messages.MissMessage{
-		Type:       "MISS",
-		Coordinate: coordinate,
-	}
+	gl.RunBattleship(c)
 }
