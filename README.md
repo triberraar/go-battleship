@@ -9,7 +9,6 @@ Backend written in golang with gorilla
 This should be made more simple but time and all that.
 
 First build the ui by running `npm install` `npm run build` in the ui folder.
-Copy the build artifacts into the `static` folder to server them `cp -R dist/ ../static`
 
 Next build the backend by running `go build -o bin/go-battleship -v .` in the root folder
 
@@ -24,4 +23,4 @@ Run the backend by running `go run main.go` in the root folder. This will run a 
 
 ## How to deploy
 
-Make sure the frontend in built, and run `git push heroku master`. You can then open the webpage by running `heroku open` and view the logs with `heroku logs --tail`.
+Make sure the frontend is built, commit to master, and run `git push heroku master`. You can then open the webpage by running `heroku open` and view the logs with `heroku logs --tail`.
