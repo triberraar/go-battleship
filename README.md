@@ -10,7 +10,7 @@ This should be made more simple but time and all that.
 
 First build the ui by running `npm install` `npm run build` in the ui folder.
 
-Next build the backend by running `go build -o bin/go-battleship ./cmd/battleship/main.go` in the root folder
+Next build the backend by running `go build -o bin/go-battleship ./cmd/go-battleship/main.go` in the root folder
 
 Run the whole thing by executing `./bin/go-battleship`
 
@@ -19,7 +19,7 @@ Run the whole thing by executing `./bin/go-battleship`
 To develop you need to run two servers. One runs and watches the frontend code, the other one runs the go server
 
 Run the ui by running `npm run watch` in the ui folder. This will run a server on port 100001.
-Run the backend by running `o run ./cmd/battleship/` in the root folder. This will run a server on port 100002.
+Run the backend by running `go run ./cmd/battleship/` in the root folder. This will run a server on port 100002.
 
 ## How to deploy
 
