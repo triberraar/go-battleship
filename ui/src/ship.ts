@@ -16,11 +16,43 @@ class Ship extends Phaser.GameObjects.GameObject {
       const sp = this.scene.add.sprite(24 + x * 48, this.size * 24 + y * 48, `${this.type}Destroyed`)
       sp.anims.load(`${this.type}Destroyed`)
       sp.anims.play(`${this.type}Destroyed`)
+      sp.on('animationcomplete', this.destructionDone, this)
     } else {
       // const ship = scene.add.image(this.size * 24 + x * 48, 24 + y * 48, this.type).setAngle(90)
       const sp = this.scene.add.sprite(this.size * 24 + x * 48, 24 + y * 48, `${this.type}Destroyed`).setAngle(90)
       sp.anims.load(`${this.type}Destroyed`)
       sp.anims.play(`${this.type}Destroyed`)
+      sp.on('animationcomplete', this.destructionDone, this)
+    }
+  }
+
+  destructionDone() {
+    const p = this.scene.add.particles('smokeParticle')
+    const emiterConfig = {
+      speed: 50,
+      blendMode: Phaser.BlendModes.ADD,
+      scale: 0.1,
+      frequency: 1,
+      quantity: 1
+    } as Phaser.Types.GameObjects.Particles.ParticleEmitterConfig
+    for (var i = 0; i < this.size; i++) {
+      if (this.vertical) {
+        emiterConfig.x = this.x * 48 + 24
+        emiterConfig.y = (this.y + i) * 48 + 24
+        const e = p.createEmitter(emiterConfig)
+        e.setDeathZone({
+          type: 'onLeave',
+          source: new Phaser.Geom.Circle(this.x * 48 + 24, (this.y + i) * 48 + 24, 24)
+        })
+      } else {
+        emiterConfig.x = (this.x + i) * 48 + 24
+        emiterConfig.y = this.y * 48 + 24
+        const e = p.createEmitter(emiterConfig)
+        e.setDeathZone({
+          type: 'onLeave',
+          source: new Phaser.Geom.Circle((this.x + i) * 48 + 24, this.y * 48 + 24, 24)
+        })
+      }
     }
   }
 }

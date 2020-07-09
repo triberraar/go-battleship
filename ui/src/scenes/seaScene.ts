@@ -20,6 +20,7 @@ export default class SeaScene extends Phaser.Scene {
     this.load.image('ship2', 'assets/2_ship.png')
     this.load.image('ship3', 'assets/3_ship.png')
     this.load.image('ship4', 'assets/4_ship.png')
+    this.load.image('smokeParticle', 'assets/smoke.png')
   }
 
   create() {
