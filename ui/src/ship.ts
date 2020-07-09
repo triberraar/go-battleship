@@ -12,9 +12,15 @@ class Ship extends Phaser.GameObjects.GameObject {
     super(scene, type)
 
     if (vertical) {
-      const ship = scene.add.image(24 + x * 48, this.size * 24 + y * 48, this.type)
+      // const ship = scene.add.image(24 + x * 48, this.size * 24 + y * 48, this.type)
+      const sp = this.scene.add.sprite(24 + x * 48, this.size * 24 + y * 48, `${this.type}Destroyed`)
+      sp.anims.load(`${this.type}Destroyed`)
+      sp.anims.play(`${this.type}Destroyed`)
     } else {
-      const ship = scene.add.image(this.size * 24 + x * 48, 24 + y * 48, this.type).setAngle(90)
+      // const ship = scene.add.image(this.size * 24 + x * 48, 24 + y * 48, this.type).setAngle(90)
+      const sp = this.scene.add.sprite(this.size * 24 + x * 48, 24 + y * 48, `${this.type}Destroyed`).setAngle(90)
+      sp.anims.load(`${this.type}Destroyed`)
+      sp.anims.play(`${this.type}Destroyed`)
     }
   }
 }

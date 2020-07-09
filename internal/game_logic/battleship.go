@@ -15,6 +15,7 @@ type ship struct {
 	y        int
 	size     int
 	vertical bool
+	hits     int
 }
 
 func newShip4() ship {
@@ -41,9 +42,26 @@ func newShip1() ship {
 	}
 }
 
+func (s *ship) hit() {
+	s.hits++
+}
+
+func (s *ship) isDestroyed() bool {
+	return s.hits == s.size
+}
+
+type tile struct {
+	status string
+	ship   *ship
+}
+
+func (t *tile) hasShip() bool {
+	return t.ship != nil
+}
+
 type battleship struct {
 	c         *websocket.Conn
-	board     [][]byte
+	board     [][]tile
 	dimension int
 	ships     [6]ship
 }
@@ -58,25 +76,35 @@ func RunBattleship(c *websocket.Conn) {
 		if bm.Type == "FIRE" {
 			fm := messages.FireMessage{}
 			json.Unmarshal(message, &fm)
-			if bs.board[fm.Coordinate.X][fm.Coordinate.Y] == 'b' {
-				c.WriteJSON(messages.NewHitMessage(fm.Coordinate))
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y] = 'f'
-			} else if bs.board[fm.Coordinate.X][fm.Coordinate.Y] == 's' {
+			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
+				continue
+			}
+			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
+
+				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+				bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
+				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
+					coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
+					c.WriteJSON(messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
+				} else {
+					c.WriteJSON(messages.NewHitMessage(fm.Coordinate))
+				}
+			} else {
 				c.WriteJSON(messages.NewMissMessage(fm.Coordinate))
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y] = 'f'
+				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
 			}
 		}
 	}
 }
 
 func (b *battleship) newBoard() {
-	b.board = make([][]byte, b.dimension)
+	b.board = make([][]tile, b.dimension)
 	for i := 0; i < b.dimension; i++ {
-		b.board[i] = make([]byte, b.dimension)
+		b.board[i] = make([]tile, b.dimension)
 	}
 	for i := 0; i < b.dimension; i++ {
 		for j := 0; j < b.dimension; j++ {
-			b.board[i][j] = 's'
+			b.board[i][j].status = "sea"
 		}
 	}
 
@@ -99,23 +127,21 @@ func (b *battleship) newBoard() {
 func (b *battleship) generateShip(s *ship) {
 	vertical, x, y := randomPlace(b.dimension, s.size)
 
-	log.Print("generating ship\n")
-	log.Printf("vertical %t", vertical)
-	log.Printf("x %d, y %d \n", x, y)
 	for !b.isValidPlacement(s.size, vertical, x, y) {
 		vertical, x, y = randomPlace(b.dimension, s.size)
 	}
-	log.Print("generated ship")
 	s.x = x
 	s.y = y
 	s.vertical = vertical
 	if vertical {
 		for i := 0; i < s.size; i++ {
-			b.board[x][y+i] = 'b'
+			b.board[x][y+i].status = "ship"
+			b.board[x][y+i].ship = s
 		}
 	} else {
 		for i := 0; i < s.size; i++ {
-			b.board[x+i][y] = 'b'
+			b.board[x+i][y].status = "ship"
+			b.board[x+i][y].ship = s
 		}
 
 	}
@@ -140,13 +166,13 @@ func randomPlace(dimension int, size int) (bool, int, int) {
 func (b *battleship) isValidPlacement(size int, vertical bool, x int, y int) bool {
 	if vertical {
 		for i := 0; i < size; i++ {
-			if b.board[x][y+i] != 's' {
+			if b.board[x][y+i].status != "sea" {
 				return false
 			}
 		}
 	} else {
 		for i := 0; i < size; i++ {
-			if b.board[x+i][y] != 's' {
+			if b.board[x+i][y].status != "sea" {
 				return false
 			}
 

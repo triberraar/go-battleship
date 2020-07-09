@@ -15,6 +15,13 @@ interface missMessage {
   coordinate: Coordinate
 }
 
+interface shipDestroyedMessage {
+  type: string
+  coordinate: Coordinate
+  shipSize: number
+  vertical: boolean
+}
+
 export default class CommunicationManager {
   private boardManager: BoardManager
   private ws: WebSocket
@@ -43,12 +50,19 @@ export default class CommunicationManager {
 
   onmessage = (ev: MessageEvent) => {
     const m = JSON.parse(ev.data)
-    if (m.type == 'HIT') {
-      const hm = m as HitMessage
-      this.onHit(hm.coordinate)
-    } else if (m.type == 'MISS') {
-      const mm = m as missMessage
-      this.onMiss(mm.coordinate)
+    switch (m.type) {
+      case 'HIT': {
+        this.onHit(m)
+        break
+      }
+      case 'MISS': {
+        this.onMiss(m)
+        break
+      }
+      case 'SHIP_DESTROYED': {
+        this.onShipDestroyed(m)
+        break
+      }
     }
   }
 
@@ -64,11 +78,15 @@ export default class CommunicationManager {
     this.ws.send(JSON.stringify({ type: 'FIRE', coordinate: { x, y } }))
   }
 
-  onHit(coordinate: Coordinate) {
-    this.boardManager.hit(coordinate.x, coordinate.y)
+  onHit(m: HitMessage) {
+    this.boardManager.hit(m.coordinate.x, m.coordinate.y)
   }
 
-  onMiss(coordinate: Coordinate) {
-    this.boardManager.miss(coordinate.x, coordinate.y)
+  onMiss(m: missMessage) {
+    this.boardManager.miss(m.coordinate.x, m.coordinate.y)
+  }
+
+  onShipDestroyed(m: shipDestroyedMessage) {
+    this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
   }
 }
