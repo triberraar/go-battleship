@@ -63,6 +63,9 @@ class SeaTile extends Phaser.GameObjects.GameObject {
 
 export default class BoardManager {
   private board: SeaTile[][] = []
+  private fireworksEmitter1: Phaser.GameObjects.Particles.ParticleEmitter
+  private fireworksEmitter2: Phaser.GameObjects.Particles.ParticleEmitter
+
   miss(x: number, y: number) {
     this.board[x][y].miss()
   }
@@ -91,5 +94,71 @@ export default class BoardManager {
         this.board[i][j] = new SeaTile(this.scene, i, j, communicationManager)
       }
     }
+  }
+
+  victory() {
+    const particles = this.scene.add.particles('fireworks')
+    this.fireworksEmitter1 = particles.createEmitter({
+      frame: ['red', 'green'],
+      lifespan: 4000,
+      angle: { min: -0, max: 360 },
+      speed: { min: 0, max: 300 },
+      scale: { start: 0.6, end: 0 },
+      gravityY: 300,
+      bounce: 0.9,
+
+      collideTop: false,
+      collideBottom: false,
+      blendMode: 'ADD',
+      on: false
+    })
+    this.fireworksEmitter2 = particles.createEmitter({
+      frame: ['yellow', 'red', 'white'],
+      lifespan: 4000,
+      angle: { min: -0, max: 360 },
+      speed: { min: 0, max: 300 },
+      scale: { start: 0.6, end: 0 },
+      gravityY: 300,
+      bounce: 0.9,
+
+      collideTop: false,
+      collideBottom: false,
+      blendMode: 'ADD',
+      on: false
+    })
+    for (var i = 0; i < 3; i++) {
+      setTimeout(
+        () =>
+          this.fireworksEmitter1.explode(
+            150,
+            Math.floor(Math.random() * (750 - 50)) + 50,
+            Math.floor(Math.random() * (550 - 50)) + 50
+          ),
+        Math.random() * (5000 - 1000) + 1000
+      )
+      setTimeout(
+        () =>
+          this.fireworksEmitter2.explode(
+            150,
+            Math.floor(Math.random() * (750 - 50)) + 50,
+            Math.floor(Math.random() * (550 - 50)) + 50
+          ),
+        Math.random() * (5000 - 1000) + 1000
+      )
+    }
+    this.fireworksEmitter1.explode(
+      150,
+      Math.floor(Math.random() * (750 - 50)) + 50,
+      Math.floor(Math.random() * (550 - 50)) + 50
+    )
+    this.fireworksEmitter2.explode(
+      150,
+      Math.floor(Math.random() * (750 - 50)) + 50,
+      Math.floor(Math.random() * (550 - 50)) + 50
+    )
+  }
+
+  restart() {
+    this.scene.scene.restart()
   }
 }

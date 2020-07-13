@@ -3,6 +3,7 @@ import CommunicationManager from '../communication'
 
 export default class SeaScene extends Phaser.Scene {
   private boardManager: BoardManager
+
   constructor() {
     super('sea')
   }
@@ -15,6 +16,7 @@ export default class SeaScene extends Phaser.Scene {
     this.load.spritesheet('ship2Destroyed', 'assets/fireShipOp_2.png', { frameWidth: 53, frameHeight: 85 })
     this.load.spritesheet('ship3Destroyed', 'assets/fireShipOp_3.png', { frameWidth: 69, frameHeight: 138 })
     this.load.spritesheet('ship4Destroyed', 'assets/fireShipOp_4.png', { frameWidth: 69, frameHeight: 180 })
+    this.load.atlas('fireworks', 'assets/flares.png', 'assets/flares.json')
 
     // this.load.image('ship1', 'assets/1_ship.png')
     this.load.image('ship2', 'assets/2_ship.png')
@@ -50,8 +52,6 @@ export default class SeaScene extends Phaser.Scene {
       repeat: 0,
       frameRate: 16
     })
-
-    console.log(this.anims.generateFrameNumbers('ship3Destroyed', {}).length)
 
     const communicationManager = new CommunicationManager()
     this.boardManager = new BoardManager(this, 10, 10, communicationManager)

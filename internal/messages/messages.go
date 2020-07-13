@@ -30,6 +30,14 @@ type shipDestroyedMessage struct {
 	Vertical   bool       `json:"vertical"`
 }
 
+type victoryMessage struct {
+	Type string `json:"type"`
+}
+
+type restartMessage struct {
+	Type string `json:"type"`
+}
+
 // FireMessage sent by player when he fires somewhere
 type FireMessage struct {
 	Type       string     `json:"type"`
@@ -58,5 +66,17 @@ func NewShipDestroyedMessage(coordinate Coordinate, shipSize int, vertical bool)
 		Coordinate: coordinate,
 		ShipSize:   shipSize,
 		Vertical:   vertical,
+	}
+}
+
+func NewVictoryMessage() victoryMessage {
+	return victoryMessage{
+		Type: "VICTORY",
+	}
+}
+
+func NewRestartMessage() restartMessage {
+	return restartMessage{
+		Type: "RESTART",
 	}
 }

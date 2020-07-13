@@ -63,6 +63,14 @@ export default class CommunicationManager {
         this.onShipDestroyed(m)
         break
       }
+      case 'VICTORY': {
+        this.onVictory()
+        break
+      }
+      case 'RESTART': {
+        this.onRestart()
+        break
+      }
     }
   }
 
@@ -88,5 +96,11 @@ export default class CommunicationManager {
 
   onShipDestroyed(m: shipDestroyedMessage) {
     this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
+  }
+  onVictory() {
+    this.boardManager.victory()
+  }
+  onRestart() {
+    this.boardManager.restart()
   }
 }
