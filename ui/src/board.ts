@@ -116,7 +116,7 @@ export default class BoardManager {
       on: false
     })
     this.fireworksEmitter2 = particles.createEmitter({
-      frame: ['yellow', 'red', 'white'],
+      frame: ['yellow', 'blue', 'white'],
       lifespan: 4000,
       angle: { min: -0, max: 360 },
       speed: { min: 0, max: 300 },
