@@ -34,7 +34,6 @@ export default class CommunicationManager {
       wsUri = 'ws:'
     }
     wsUri += '//' + loc.host + '/battleship'
-    console.log(wsUri)
     if (loc.host.startsWith('localhost')) {
       wsUri = 'ws://localhost:10002/battleship'
     }

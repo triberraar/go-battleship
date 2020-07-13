@@ -66,12 +66,28 @@ export default class BoardManager {
   private fireworksEmitter1: Phaser.GameObjects.Particles.ParticleEmitter
   private fireworksEmitter2: Phaser.GameObjects.Particles.ParticleEmitter
 
+  constructor(
+    private scene: Phaser.Scene,
+    private x: number,
+    private y: number,
+    private communicationManager: CommunicationManager
+  ) {
+    for (var i = 0; i < 10; i++) {
+      this.board[i] = []
+      for (var j = 0; j < 10; j++) {
+        this.board[i][j] = new SeaTile(this.scene, i, j, this.communicationManager)
+      }
+    }
+  }
+
   miss(x: number, y: number) {
     this.board[x][y].miss()
   }
+
   hit(x: number, y: number) {
     this.board[x][y].hit()
   }
+
   destoryShip(x: number, y: number, size: number, vertical: boolean) {
     for (var i = 0; i < size; i++) {
       if (vertical) {
@@ -81,19 +97,6 @@ export default class BoardManager {
       }
     }
     this.board[x][y].destoryShip(size, vertical)
-  }
-  constructor(
-    private scene: Phaser.Scene,
-    private x: number,
-    private y: number,
-    communicationManager: CommunicationManager
-  ) {
-    for (var i = 0; i < 10; i++) {
-      this.board[i] = []
-      for (var j = 0; j < 10; j++) {
-        this.board[i][j] = new SeaTile(this.scene, i, j, communicationManager)
-      }
-    }
   }
 
   victory() {
@@ -159,6 +162,6 @@ export default class BoardManager {
   }
 
   restart() {
-    this.scene.scene.restart()
+    this.scene.scene.restart({ communicationManager: this.communicationManager })
   }
 }

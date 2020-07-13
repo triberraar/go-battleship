@@ -3,6 +3,7 @@ import CommunicationManager from '../communication'
 
 export default class SeaScene extends Phaser.Scene {
   private boardManager: BoardManager
+  private communicationManager: CommunicationManager
 
   constructor() {
     super('sea')
@@ -53,8 +54,15 @@ export default class SeaScene extends Phaser.Scene {
       frameRate: 16
     })
 
-    const communicationManager = new CommunicationManager()
-    this.boardManager = new BoardManager(this, 10, 10, communicationManager)
-    communicationManager.setBoardManager(this.boardManager)
+    this.boardManager = new BoardManager(this, 10, 10, this.communicationManager)
+    this.communicationManager.setBoardManager(this.boardManager)
+  }
+
+  init(data) {
+    if (data.communicationManager) {
+      this.communicationManager = this.communicationManager
+    } else {
+      this.communicationManager = new CommunicationManager()
+    }
   }
 }

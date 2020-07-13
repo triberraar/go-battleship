@@ -119,11 +119,12 @@ func (b *battleship) newBoard() {
 	}
 
 	b.ships[0] = newShip4()
-	b.ships[1] = newShip3()
-	b.ships[2] = newShip2()
-	b.ships[3] = newShip2()
-	b.ships[4] = newShip1()
-	b.ships[5] = newShip1()
+	b.ships[1] = newShip4()
+	b.ships[2] = newShip3()
+	b.ships[3] = newShip3()
+	b.ships[4] = newShip3()
+	b.ships[5] = newShip2()
+	b.victory = false
 
 	for i := 0; i < len(b.ships); i++ {
 		b.generateShip(&b.ships[i])
