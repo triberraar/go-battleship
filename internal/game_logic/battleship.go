@@ -16,6 +16,11 @@ var upgrader = websocket.Upgrader{
 		return true
 	}} // use default options
 
+const (
+	pongWait   = 60 * time.Second
+	pingPeriod = (pongWait * 9) / 10
+)
+
 type Client struct {
 	Conn       *websocket.Conn
 	Battleship *Battleship
@@ -24,6 +29,11 @@ type Client struct {
 
 func (c *Client) ReadPump() {
 	defer c.Conn.Close()
+	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.Conn.SetPongHandler(func(string) error {
+		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -38,10 +48,15 @@ func (c *Client) ReadPump() {
 }
 
 func (c *Client) WritePump() {
+	ticker := time.NewTicker(pingPeriod)
 	for {
 		select {
 		case message := <-c.Send:
 			c.Conn.WriteJSON(message)
+		case <-ticker.C:
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }
