@@ -162,8 +162,39 @@ export default class BoardManager {
     setTimeout(() => this.backToMenu(), 6000)
   }
 
+  ships(shipSizes: number[]) {
+    shipSizes.sort()
+    for (var i = 0; i < shipSizes.length; i++) {
+      switch (shipSizes[i]) {
+        case 1:
+          this.scene.add
+            .sprite(500, 50 + i * 50, 'ship1')
+            .setAngle(-90)
+            .setOrigin(0, 0)
+          break
+        case 2:
+          this.scene.add
+            .sprite(500, 50 + i * 50, 'ship2')
+            .setAngle(-90)
+            .setOrigin(0, 0)
+          break
+        case 3:
+          this.scene.add
+            .sprite(500, 50 + i * 50, 'ship3')
+            .setAngle(-90)
+            .setOrigin(0, 0)
+          break
+        case 4:
+          this.scene.add
+            .sprite(500, 50 + i * 50, 'ship4')
+            .setAngle(-90)
+            .setOrigin(0, 0)
+          break
+      }
+    }
+  }
+
   backToMenu() {
-    console.log('back tomenu?')
     this.scene.scene.stop('seaScene')
     this.scene.scene.start('menuScene')
   }

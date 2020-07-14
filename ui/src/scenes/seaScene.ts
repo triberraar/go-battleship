@@ -19,7 +19,7 @@ export default class SeaScene extends Phaser.Scene {
     this.load.spritesheet('ship4Destroyed', 'assets/fireShipOp_4.png', { frameWidth: 69, frameHeight: 180 })
     this.load.atlas('fireworks', 'assets/flares.png', 'assets/flares.json')
 
-    // this.load.image('ship1', 'assets/1_ship.png')
+    this.load.image('ship1', 'assets/1_ship.png')
     this.load.image('ship2', 'assets/2_ship.png')
     this.load.image('ship3', 'assets/3_ship.png')
     this.load.image('ship4', 'assets/4_ship.png')
@@ -56,6 +56,7 @@ export default class SeaScene extends Phaser.Scene {
 
     this.boardManager = new BoardManager(this, 10, 10, this.communicationManager)
     this.communicationManager.setBoardManager(this.boardManager)
+    this.communicationManager.play()
   }
 
   init(data) {
@@ -64,6 +65,5 @@ export default class SeaScene extends Phaser.Scene {
     } else {
       this.communicationManager = new CommunicationManager()
     }
-    this.communicationManager.play()
   }
 }

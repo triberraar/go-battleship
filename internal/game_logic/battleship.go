@@ -82,6 +82,11 @@ func RunBattleship(c *websocket.Conn) {
 		json.Unmarshal(message, &bm)
 		if bm.Type == "PLAY" {
 			bs.newBoard()
+			var shipSizes [len(bs.ships)]int
+			for i := 0; i < len(bs.ships); i++ {
+				shipSizes[i] = bs.ships[i].size
+			}
+			c.WriteJSON(messages.NewBoardMessage(shipSizes[:]))
 		} else if bm.Type == "FIRE" && !bs.victory {
 			fm := messages.FireMessage{}
 			json.Unmarshal(message, &fm)

@@ -22,6 +22,10 @@ interface shipDestroyedMessage {
   vertical: boolean
 }
 
+interface boardMessage {
+  shipSizes: number[]
+}
+
 export default class CommunicationManager {
   private boardManager: BoardManager
   private ws: WebSocket
@@ -66,6 +70,10 @@ export default class CommunicationManager {
         this.onVictory()
         break
       }
+      case 'BOARD': {
+        this.onBoard(m)
+        break
+      }
     }
   }
 
@@ -98,5 +106,10 @@ export default class CommunicationManager {
   }
   onVictory() {
     this.boardManager.victory()
+  }
+
+  onBoard(m: boardMessage) {
+    console.log(this.boardManager)
+    this.boardManager.ships(m.shipSizes)
   }
 }
