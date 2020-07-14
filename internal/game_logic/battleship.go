@@ -198,17 +198,40 @@ func randomPlace(dimension int, size int) (bool, int, int) {
 
 func (b *battleship) isValidPlacement(size int, vertical bool, x int, y int) bool {
 	if vertical {
+		if y-1 >= 0 && b.board[x][y-1].status != "sea" {
+			return false
+		}
 		for i := 0; i < size; i++ {
 			if b.board[x][y+i].status != "sea" {
 				return false
 			}
+			if x-1 >= 0 && b.board[x-1][y+i].status != "sea" {
+				return false
+			}
+			if x+1 < b.dimension && b.board[x+1][y+i].status != "sea" {
+				return false
+			}
+		}
+		if y+size < b.dimension && b.board[x][y+size].status != "sea" {
+			return false
 		}
 	} else {
+		if x-1 >= 0 && b.board[x-1][y].status != "sea" {
+			return false
+		}
 		for i := 0; i < size; i++ {
 			if b.board[x+i][y].status != "sea" {
 				return false
 			}
-
+			if y-1 > 0 && b.board[x+i][y-1].status != "sea" {
+				return false
+			}
+			if y+1 < b.dimension && b.board[x+i][y+1].status != "sea" {
+				return false
+			}
+		}
+		if x+size < b.dimension && b.board[x+size][y].status != "sea" {
+			return false
 		}
 
 	}
