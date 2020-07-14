@@ -20,6 +20,11 @@ func Battleship(w http.ResponseWriter, r *http.Request) {
 		log.Print("upgrade:", err)
 		return
 	}
-	defer c.Close()
-	gl.RunBattleship(c)
+	client := &gl.Client{Conn: c, Send: make(chan interface{})}
+	battleship := gl.NewBattleship(client)
+	client.Battleship = battleship
+
+	go client.WritePump()
+	go client.ReadPump()
+	go battleship.Run()
 }

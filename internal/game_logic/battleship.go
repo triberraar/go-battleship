@@ -4,11 +4,57 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	}} // use default options
+
+type Client struct {
+	Conn       *websocket.Conn
+	Battleship *Battleship
+	Send       chan interface{}
+}
+
+func (c *Client) ReadPump() {
+	defer c.Conn.Close()
+	for {
+		_, message, err := c.Conn.ReadMessage()
+		if err != nil {
+			log.Print("error: %v", err)
+		}
+		c.Battleship.messages <- message
+	}
+}
+
+func (c *Client) WritePump() {
+	for {
+		select {
+		case message := <-c.Send:
+			c.Conn.WriteJSON(message)
+		}
+	}
+}
+
+func ServeWs(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("upgrade:", err)
+		return
+	}
+	client := &Client{Conn: c}
+	battleship := NewBattleship(client)
+
+	go client.WritePump()
+	go client.ReadPump()
+	go battleship.Run()
+}
 
 type ship struct {
 	x        int
@@ -65,62 +111,124 @@ func (t *tile) hasShip() bool {
 	return t.ship != nil
 }
 
-type battleship struct {
-	c         *websocket.Conn
+type Battleship struct {
+	messages chan []byte
+	client   *Client
+
 	board     [][]tile
 	dimension int
 	ships     [6]ship
 	victory   bool
 }
 
-func RunBattleship(c *websocket.Conn) {
-	bs := battleship{c: c, dimension: 10, victory: false}
-
+func (bs *Battleship) Run() {
 	for {
-		bm := messages.BaseMessage{}
-		_, message, _ := c.ReadMessage()
-		json.Unmarshal(message, &bm)
-		if bm.Type == "PLAY" {
-			bs.newBoard()
-			var shipSizes [len(bs.ships)]int
-			for i := 0; i < len(bs.ships); i++ {
-				shipSizes[i] = bs.ships[i].size
-			}
-			c.WriteJSON(messages.NewBoardMessage(shipSizes[:]))
-		} else if bm.Type == "FIRE" && !bs.victory {
-			fm := messages.FireMessage{}
-			json.Unmarshal(message, &fm)
-			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
-				continue
-			}
-			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
+		select {
+		case message := <-bs.messages:
+			bm := messages.BaseMessage{}
+			json.Unmarshal(message, &bm)
+			if bm.Type == "PLAY" {
+				bs.newBoard()
+				var shipSizes [len(bs.ships)]int
+				for i := 0; i < len(bs.ships); i++ {
+					shipSizes[i] = bs.ships[i].size
+				}
+				bs.client.Send <- messages.NewBoardMessage(shipSizes[:])
+			} else if bm.Type == "FIRE" && !bs.victory {
+				fm := messages.FireMessage{}
+				json.Unmarshal(message, &fm)
+				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
+					continue
+				}
+				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
 
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
-				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
-					coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
-					c.WriteJSON(messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
+					bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+					bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
+					if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
+						coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
+						bs.client.Send <- messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical)
+					} else {
+						bs.client.Send <- messages.NewHitMessage(fm.Coordinate)
+					}
+					if bs.hasVictory() {
+						bs.victory = true
+						bs.client.Send <- messages.NewVictoryMessage()
+						// select {
+						// case <-time.After(10 * time.Second):
+						// 	bs.newBoard()
+						// 	c.WriteJSON(messages.NewRestartMessage())
+						// }
+					}
 				} else {
-					c.WriteJSON(messages.NewHitMessage(fm.Coordinate))
+					bs.client.Send <- messages.NewMissMessage(fm.Coordinate)
+					bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
 				}
-				if bs.hasVictory() {
-					bs.victory = true
-					c.WriteJSON(messages.NewVictoryMessage())
-					// select {
-					// case <-time.After(10 * time.Second):
-					// 	bs.newBoard()
-					// 	c.WriteJSON(messages.NewRestartMessage())
-					// }
-				}
-			} else {
-				c.WriteJSON(messages.NewMissMessage(fm.Coordinate))
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
 			}
 		}
 	}
 }
 
-func (b *battleship) newBoard() {
+func (bs *Battleship) sendMessage() {
+
+}
+
+func NewBattleship(client *Client) *Battleship {
+	return &Battleship{
+		dimension: 10,
+		victory:   false,
+		messages:  make(chan []byte),
+		client:    client,
+	}
+}
+
+// func RunBattleship(c *websocket.Conn) {
+// 	bs := battleship{c: c, dimension: 10, victory: false}
+
+// 	for {
+// 		bm := messages.BaseMessage{}
+// 		_, message, _ := c.ReadMessage()
+// 		json.Unmarshal(message, &bm)
+// 		if bm.Type == "PLAY" {
+// 			bs.newBoard()
+// 			var shipSizes [len(bs.ships)]int
+// 			for i := 0; i < len(bs.ships); i++ {
+// 				shipSizes[i] = bs.ships[i].size
+// 			}
+// 			c.WriteJSON(messages.NewBoardMessage(shipSizes[:]))
+// 		} else if bm.Type == "FIRE" && !bs.victory {
+// 			fm := messages.FireMessage{}
+// 			json.Unmarshal(message, &fm)
+// 			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
+// 				continue
+// 			}
+// 			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
+
+// 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+// 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
+// 				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
+// 					coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
+// 					c.WriteJSON(messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
+// 				} else {
+// 					c.WriteJSON(messages.NewHitMessage(fm.Coordinate))
+// 				}
+// 				if bs.hasVictory() {
+// 					bs.victory = true
+// 					c.WriteJSON(messages.NewVictoryMessage())
+// 					// select {
+// 					// case <-time.After(10 * time.Second):
+// 					// 	bs.newBoard()
+// 					// 	c.WriteJSON(messages.NewRestartMessage())
+// 					// }
+// 				}
+// 			} else {
+// 				c.WriteJSON(messages.NewMissMessage(fm.Coordinate))
+// 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+// 			}
+// 		}
+// 	}
+// }
+
+func (b *Battleship) newBoard() {
 	b.board = make([][]tile, b.dimension)
 	for i := 0; i < b.dimension; i++ {
 		b.board[i] = make([]tile, b.dimension)
@@ -134,8 +242,8 @@ func (b *battleship) newBoard() {
 	for i := 0; i < len(b.ships); i++ {
 		s1 := rand.NewSource(time.Now().UnixNano())
 		r1 := rand.New(s1)
-		size := r1.Intn(4)
-		b.ships[i] = newShip(size + 1)
+		size := r1.Intn(3)
+		b.ships[i] = newShip(size + 2)
 	}
 
 	b.victory = false
@@ -149,7 +257,7 @@ func (b *battleship) newBoard() {
 	}
 }
 
-func (b *battleship) hasVictory() bool {
+func (b *Battleship) hasVictory() bool {
 	result := true
 	for _, s := range b.ships {
 		result = result && s.isDestroyed()
@@ -157,7 +265,7 @@ func (b *battleship) hasVictory() bool {
 	return result
 }
 
-func (b *battleship) generateShip(s *ship) {
+func (b *Battleship) generateShip(s *ship) {
 	vertical, x, y := randomPlace(b.dimension, s.size)
 
 	for !b.isValidPlacement(s.size, vertical, x, y) {
@@ -196,7 +304,7 @@ func randomPlace(dimension int, size int) (bool, int, int) {
 	return vertical, x, y
 }
 
-func (b *battleship) isValidPlacement(size int, vertical bool, x int, y int) bool {
+func (b *Battleship) isValidPlacement(size int, vertical bool, x int, y int) bool {
 	if vertical {
 		if y-1 >= 0 && b.board[x][y-1].status != "sea" {
 			return false
