@@ -17,6 +17,10 @@ export default class SeaScene extends Phaser.Scene {
     this.load.spritesheet('ship2Destroyed', 'assets/fireShipOp_2.png', { frameWidth: 53, frameHeight: 85 })
     this.load.spritesheet('ship3Destroyed', 'assets/fireShipOp_3.png', { frameWidth: 69, frameHeight: 138 })
     this.load.spritesheet('ship4Destroyed', 'assets/fireShipOp_4.png', { frameWidth: 69, frameHeight: 180 })
+    this.load.spritesheet('opponentShip1Destroyed', 'assets/fireShip_1.png', { frameWidth: 54, frameHeight: 45 })
+    this.load.spritesheet('opponentShip2Destroyed', 'assets/fireShip_2.png', { frameWidth: 53, frameHeight: 85 })
+    this.load.spritesheet('opponentShip3Destroyed', 'assets/fireShip_3.png', { frameWidth: 69, frameHeight: 138 })
+    this.load.spritesheet('opponentShip4Destroyed', 'assets/fireShip_4.png', { frameWidth: 69, frameHeight: 180 })
     this.load.atlas('fireworks', 'assets/flares.png', 'assets/flares.json')
 
     this.load.image('ship1', 'assets/1_ship.png')

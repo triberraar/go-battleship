@@ -1,6 +1,6 @@
 import 'phaser'
 import CommunicationManager from './communication'
-import { Ship2, Ship1, Ship3, Ship4 } from './ship'
+import { Ship2, Ship1, Ship3, Ship4, OpponentShip } from './ship'
 
 class SeaTile extends Phaser.GameObjects.GameObject {
   private hitSprite: Phaser.GameObjects.Sprite
@@ -63,6 +63,7 @@ class SeaTile extends Phaser.GameObjects.GameObject {
 
 export default class BoardManager {
   private board: SeaTile[][] = []
+  private opponentShips: OpponentShip[] = []
   private fireworksEmitter1: Phaser.GameObjects.Particles.ParticleEmitter
   private fireworksEmitter2: Phaser.GameObjects.Particles.ParticleEmitter
 
@@ -164,36 +165,11 @@ export default class BoardManager {
 
   ships(shipSizes: number[]) {
     shipSizes.sort()
-    for (var i = 0; i < shipSizes.length; i++) {
-      switch (shipSizes[i]) {
-        case 1:
-          this.scene.add
-            .sprite(500, 50 + i * 50, 'ship1')
-            .setAngle(-90)
-            .setOrigin(0, 0)
-          break
-        case 2:
-          this.scene.add
-            .sprite(500, 50 + i * 50, 'ship2')
-            .setAngle(-90)
-            .setOrigin(0, 0)
-          break
-        case 3:
-          this.scene.add
-            .sprite(500, 50 + i * 50, 'ship3')
-            .setAngle(-90)
-            .setOrigin(0, 0)
-          break
-        case 4:
-          this.scene.add
-            .sprite(500, 50 + i * 50, 'ship4')
-            .setAngle(-90)
-            .setOrigin(0, 0)
-          break
-      }
-    }
+    const os = shipSizes.map((s, i) => {
+      return new OpponentShip(this.scene, 'opponentship', 500, 50 + i * 50, s)
+    })
+    this.opponentShips = os
   }
-
   backToMenu() {
     this.scene.scene.stop('seaScene')
     this.scene.scene.start('menuScene')

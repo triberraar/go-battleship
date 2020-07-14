@@ -80,3 +80,15 @@ export class Ship4 extends Ship {
     super(scene, 'ship4', x, y, 4, vertical)
   }
 }
+
+export class OpponentShip extends Phaser.GameObjects.GameObject {
+  private destroyed: boolean
+  private sprite: Phaser.GameObjects.Sprite
+
+  constructor(scene: Phaser.Scene, type: string, private x: number, private y: number, private size: number) {
+    super(scene, type)
+    this.destroyed = false
+
+    this.sprite = this.scene.add.sprite(x, y, `ship${size}`).setAngle(-90).setOrigin(0, 0)
+  }
+}
