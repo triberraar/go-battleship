@@ -69,12 +69,14 @@ type battleship struct {
 
 func RunBattleship(c *websocket.Conn) {
 	bs := battleship{c: c, dimension: 10, victory: false}
-	bs.newBoard()
+
 	for {
 		bm := messages.BaseMessage{}
 		_, message, _ := c.ReadMessage()
 		json.Unmarshal(message, &bm)
-		if bm.Type == "FIRE" && !bs.victory {
+		if bm.Type == "PLAY" {
+			bs.newBoard()
+		} else if bm.Type == "FIRE" && !bs.victory {
 			fm := messages.FireMessage{}
 			json.Unmarshal(message, &fm)
 			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
@@ -93,11 +95,11 @@ func RunBattleship(c *websocket.Conn) {
 				if bs.hasVictory() {
 					bs.victory = true
 					c.WriteJSON(messages.NewVictoryMessage())
-					select {
-					case <-time.After(10 * time.Second):
-						bs.newBoard()
-						c.WriteJSON(messages.NewRestartMessage())
-					}
+					// select {
+					// case <-time.After(10 * time.Second):
+					// 	bs.newBoard()
+					// 	c.WriteJSON(messages.NewRestartMessage())
+					// }
 				}
 			} else {
 				c.WriteJSON(messages.NewMissMessage(fm.Coordinate))

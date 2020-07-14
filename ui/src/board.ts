@@ -159,9 +159,12 @@ export default class BoardManager {
       Math.floor(Math.random() * (750 - 50)) + 50,
       Math.floor(Math.random() * (550 - 50)) + 50
     )
+    setTimeout(() => this.backToMenu(), 6000)
   }
 
-  restart() {
-    this.scene.scene.restart({ communicationManager: this.communicationManager })
+  backToMenu() {
+    console.log('back tomenu?')
+    this.scene.scene.stop('seaScene')
+    this.scene.scene.start('menuScene')
   }
 }

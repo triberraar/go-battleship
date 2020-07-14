@@ -66,10 +66,6 @@ export default class CommunicationManager {
         this.onVictory()
         break
       }
-      case 'RESTART': {
-        this.onRestart()
-        break
-      }
     }
   }
 
@@ -85,6 +81,10 @@ export default class CommunicationManager {
     this.ws.send(JSON.stringify({ type: 'FIRE', coordinate: { x, y } }))
   }
 
+  play() {
+    this.ws.send(JSON.stringify({ type: 'PLAY' }))
+  }
+
   onHit(m: HitMessage) {
     this.boardManager.hit(m.coordinate.x, m.coordinate.y)
   }
@@ -98,8 +98,5 @@ export default class CommunicationManager {
   }
   onVictory() {
     this.boardManager.victory()
-  }
-  onRestart() {
-    this.boardManager.restart()
   }
 }

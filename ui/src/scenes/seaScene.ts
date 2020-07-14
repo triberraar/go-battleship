@@ -6,7 +6,7 @@ export default class SeaScene extends Phaser.Scene {
   private communicationManager: CommunicationManager
 
   constructor() {
-    super('sea')
+    super('seaScene')
   }
 
   preload() {
@@ -60,9 +60,10 @@ export default class SeaScene extends Phaser.Scene {
 
   init(data) {
     if (data.communicationManager) {
-      this.communicationManager = this.communicationManager
+      this.communicationManager = data.communicationManager
     } else {
       this.communicationManager = new CommunicationManager()
     }
+    this.communicationManager.play()
   }
 }
