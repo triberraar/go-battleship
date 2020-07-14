@@ -18,27 +18,33 @@ type ship struct {
 	hits     int
 }
 
-func newShip4() ship {
-	return ship{
-		size: 4,
-	}
-}
+// func newShip4() ship {
+// 	return ship{
+// 		size: 4,
+// 	}
+// }
 
-func newShip3() ship {
-	return ship{
-		size: 3,
-	}
-}
+// func newShip3() ship {
+// 	return ship{
+// 		size: 3,
+// 	}
+// }
 
-func newShip2() ship {
-	return ship{
-		size: 2,
-	}
-}
+// func newShip2() ship {
+// 	return ship{
+// 		size: 2,
+// 	}
+// }
 
-func newShip1() ship {
+// func newShip1() ship {
+// 	return ship{
+// 		size: 1,
+// 	}
+// }
+
+func newShip(size int) ship {
 	return ship{
-		size: 1,
+		size: size,
 	}
 }
 
@@ -120,12 +126,13 @@ func (b *battleship) newBoard() {
 		}
 	}
 
-	b.ships[0] = newShip4()
-	b.ships[1] = newShip4()
-	b.ships[2] = newShip3()
-	b.ships[3] = newShip3()
-	b.ships[4] = newShip3()
-	b.ships[5] = newShip2()
+	for i := 0; i < len(b.ships); i++ {
+		s1 := rand.NewSource(time.Now().UnixNano())
+		r1 := rand.New(s1)
+		size := r1.Intn(4)
+		b.ships[i] = newShip(size + 1)
+	}
+
 	b.victory = false
 
 	for i := 0; i < len(b.ships); i++ {
