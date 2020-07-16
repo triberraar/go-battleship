@@ -4,8 +4,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/gorilla/websocket"
-	gl "github.com/triberraar/go-battleship/internal/game_logic"
+	"github.com/triberraar/go-battleship/internal/client"
 )
 
 var upgrader = websocket.Upgrader{
@@ -14,17 +16,15 @@ var upgrader = websocket.Upgrader{
 	}} // use default options
 
 // Battleship the handlers for the battleship socket stuff
-func Battleship(w http.ResponseWriter, r *http.Request) {
+func Battleship(rm *client.RoomManager, w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
 	}
-	client := &gl.Client{Conn: c, Send: make(chan interface{})}
-	battleship := gl.NewBattleship(client)
-	client.Battleship = battleship
+	pid := uuid.New()
+	client := &client.Client{Conn: c, RoomManager: rm, PlayerID: pid.String()}
 
-	go client.WritePump()
 	go client.ReadPump()
-	go battleship.Run()
+
 }

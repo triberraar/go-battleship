@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/triberraar/go-battleship/internal/client"
 	bsHandlers "github.com/triberraar/go-battleship/internal/handlers"
 )
 
@@ -21,7 +22,12 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 	router := mux.NewRouter()
-	router.HandleFunc("/battleship", bsHandlers.Battleship)
+	rm := client.NewRoomManager()
+	go rm.Run()
+	// router.HandleFunc("/battleship", bsHandlers.Battleship)
+	router.HandleFunc("/battleship", func(w http.ResponseWriter, r *http.Request) {
+		bsHandlers.Battleship(rm, w, r)
+	})
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
 	log.Printf("Server listening on %s for shure", port)
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))

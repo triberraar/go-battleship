@@ -4,50 +4,23 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
-	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	}} // use default options
-
 const (
 	pongWait   = 60 * time.Second
 	pingPeriod = (pongWait * 9) / 10
 )
 
-type Client struct {
-	Conn       *websocket.Conn
-	Battleship *Battleship
-	Send       chan interface{}
+type WriteClient struct {
+	Conn *websocket.Conn
+	Send chan interface{}
 }
 
-func (c *Client) ReadPump() {
-	defer c.Conn.Close()
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.Conn.SetPongHandler(func(string) error {
-		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-		return nil
-	})
-	for {
-		_, message, err := c.Conn.ReadMessage()
-		if err != nil {
-			log.Print("error: %v", err)
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Println("unexcpected close")
-			}
-			break
-		}
-		c.Battleship.messages <- message
-	}
-}
-
-func (c *Client) WritePump() {
+func (c *WriteClient) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
 	for {
 		select {
@@ -59,20 +32,6 @@ func (c *Client) WritePump() {
 			}
 		}
 	}
-}
-
-func ServeWs(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("upgrade:", err)
-		return
-	}
-	client := &Client{Conn: c}
-	battleship := NewBattleship(client)
-
-	go client.WritePump()
-	go client.ReadPump()
-	go battleship.Run()
 }
 
 type ship struct {
@@ -107,8 +66,8 @@ func (t *tile) hasShip() bool {
 }
 
 type Battleship struct {
-	messages chan []byte
-	client   *Client
+	Messages chan []byte
+	client   *WriteClient
 
 	board     [][]tile
 	dimension int
@@ -117,19 +76,13 @@ type Battleship struct {
 }
 
 func (bs *Battleship) Run() {
+
 	for {
 		select {
-		case message := <-bs.messages:
+		case message := <-bs.Messages:
 			bm := messages.BaseMessage{}
 			json.Unmarshal(message, &bm)
-			if bm.Type == "PLAY" {
-				bs.newBoard()
-				var shipSizes [len(bs.ships)]int
-				for i := 0; i < len(bs.ships); i++ {
-					shipSizes[i] = bs.ships[i].size
-				}
-				bs.client.Send <- messages.NewBoardMessage(shipSizes[:])
-			} else if bm.Type == "FIRE" && !bs.victory {
+			if bm.Type == "FIRE" && !bs.victory {
 				fm := messages.FireMessage{}
 				json.Unmarshal(message, &fm)
 				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
@@ -158,17 +111,55 @@ func (bs *Battleship) Run() {
 	}
 }
 
-func (bs *Battleship) sendMessage() {
-
-}
-
-func NewBattleship(client *Client) *Battleship {
-	return &Battleship{
+func NewBattleship(wc *WriteClient) *Battleship {
+	bs := Battleship{
 		dimension: 10,
 		victory:   false,
-		messages:  make(chan []byte),
-		client:    client,
+		Messages:  make(chan []byte),
+		client:    wc,
 	}
+	bs.newBoard()
+	var shipSizes [len(bs.ships)]int
+	for i := 0; i < len(bs.ships); i++ {
+		shipSizes[i] = bs.ships[i].size
+	}
+	bs.client.Send <- messages.NewBoardMessage(shipSizes[:])
+	return &bs
+}
+
+func NewBattleshipFromExisting(bs *Battleship, wc *WriteClient) *Battleship {
+	nbs := Battleship{
+		dimension: bs.dimension,
+		victory:   false,
+		Messages:  make(chan []byte),
+		client:    wc,
+	}
+
+	board := make([][]tile, len(bs.board))
+	for i := 0; i < len(bs.board); i++ {
+		board[i] = make([]tile, len(bs.board))
+	}
+	for i := 0; i < len(bs.board); i++ {
+		for j := 0; j < len(bs.board[i]); j++ {
+			board[i][j] = bs.board[i][j]
+			if board[i][j].status == "fired" {
+				board[i][j].status = "ship"
+			}
+		}
+	}
+	nbs.board = board
+
+	for i := 0; i < len(bs.ships); i++ {
+		nbs.ships[i] = ship{x: bs.ships[i].x, y: bs.ships[i].y, vertical: bs.ships[i].vertical, size: bs.ships[i].size}
+		nbs.placeShip(&nbs.ships[i])
+	}
+
+	var shipSizes [len(bs.ships)]int
+	for i := 0; i < len(bs.ships); i++ {
+		shipSizes[i] = bs.ships[i].size
+	}
+	nbs.client.Send <- messages.NewBoardMessage(shipSizes[:])
+	return &nbs
 }
 
 func (b *Battleship) newBoard() {
@@ -217,15 +208,19 @@ func (b *Battleship) generateShip(s *ship) {
 	s.x = x
 	s.y = y
 	s.vertical = vertical
-	if vertical {
+	b.placeShip(s)
+}
+
+func (b *Battleship) placeShip(s *ship) {
+	if s.vertical {
 		for i := 0; i < s.size; i++ {
-			b.board[x][y+i].status = "ship"
-			b.board[x][y+i].ship = s
+			b.board[s.x][s.y+i].status = "ship"
+			b.board[s.x][s.y+i].ship = s
 		}
 	} else {
 		for i := 0; i < s.size; i++ {
-			b.board[x+i][y].status = "ship"
-			b.board[x+i][y].ship = s
+			b.board[s.x+i][s.y].status = "ship"
+			b.board[s.x+i][s.y].ship = s
 		}
 
 	}
