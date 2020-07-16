@@ -43,10 +43,25 @@ export default class CommunicationManager {
     }
 
     this.ws = new WebSocket(wsUri)
-
     this.ws.onopen = this.onopen
     this.ws.onmessage = this.onmessage
     this.ws.onerror = this.onerror
+    this.waitForConnection()
+  }
+
+  waitForConnection() {}
+
+  close() {
+    this.ws.close(1000)
+  }
+
+  send(message: string) {
+    if (this.ws.readyState !== 1) {
+      console.log('waiting for connection')
+      setTimeout(() => this.send(message), 5)
+    } else {
+      this.ws.send(message)
+    }
   }
 
   onopen = () => {}
@@ -86,11 +101,11 @@ export default class CommunicationManager {
   }
 
   fire(x: number, y: number) {
-    this.ws.send(JSON.stringify({ type: 'FIRE', coordinate: { x, y } }))
+    this.send(JSON.stringify({ type: 'FIRE', coordinate: { x, y } }))
   }
 
   play() {
-    this.ws.send(JSON.stringify({ type: 'PLAY' }))
+    this.send(JSON.stringify({ type: 'PLAY' }))
   }
 
   onHit(m: HitMessage) {
@@ -106,6 +121,7 @@ export default class CommunicationManager {
   }
   onVictory() {
     this.boardManager.victory()
+    this.close()
   }
 
   onBoard(m: boardMessage) {

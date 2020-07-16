@@ -45,7 +45,7 @@ func (c *Client) ReadPump() {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			log.Print("error: %v", err)
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Println("unexcpected close")
 			}
 			break
@@ -169,7 +169,6 @@ func (r *Room) Run() {
 	for {
 		select {
 		case rm := <-r.messages:
-			log.Println("a message")
 			r.clients[rm.playerID].Messages <- rm.message
 		}
 	}

@@ -58,16 +58,13 @@ export default class SeaScene extends Phaser.Scene {
       frameRate: 16
     })
 
+    this.communicationManager = new CommunicationManager()
     this.boardManager = new BoardManager(this, 10, 10, this.communicationManager)
     this.communicationManager.setBoardManager(this.boardManager)
     this.communicationManager.play()
   }
 
   init(data) {
-    if (data.communicationManager) {
-      this.communicationManager = data.communicationManager
-    } else {
-      this.communicationManager = new CommunicationManager()
-    }
+    console.log('init seascene')
   }
 }

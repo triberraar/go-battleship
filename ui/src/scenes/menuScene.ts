@@ -3,15 +3,12 @@ import SeaScene from './seaScene'
 
 export default class MenuScene extends Phaser.Scene {
   private playButton: any
-  private communicationManager: CommunicationManager
 
   constructor() {
     super('menuScene')
   }
 
-  init() {
-    this.communicationManager = new CommunicationManager()
-  }
+  init() {}
   create() {
     this.playButton = this.createButton('Play')
     // @ts-ignore
@@ -32,7 +29,7 @@ export default class MenuScene extends Phaser.Scene {
 
   buttonClicked(button: any) {
     if (button === this.playButton) {
-      this.scene.start('seaScene', { communicationManager: this.communicationManager })
+      this.scene.start('seaScene')
     }
   }
 
