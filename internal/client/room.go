@@ -81,7 +81,32 @@ type Room struct {
 	maxPlayers    int
 	clients       map[string]*gl.Battleship
 	currentPlayer string
+	players       []string
 	messages      chan roomMessage
+}
+
+func NewRoom(maxPlayers int, client *Client) Room {
+	player := client.PlayerID
+	pl := make([]string, maxPlayers)
+	pl = append(pl, player)
+	wc := gl.WriteClient{client.Conn, make(chan interface{})}
+	go wc.WritePump()
+	r := Room{maxPlayers: 2, clients: make(map[string]*gl.Battleship), currentPlayer: player, messages: make(chan roomMessage), players: pl}
+	r.clients[player] = gl.NewBattleship(&wc)
+	client.Room = &r
+	go r.Run()
+	go r.clients[player].Run()
+	return r
+}
+
+func (r *Room) joinPlayer(client *Client) {
+	wc := gl.WriteClient{client.Conn, make(chan interface{})}
+	player := client.PlayerID
+	go wc.WritePump()
+	r.players = append(r.players, player)
+	r.clients[player] = gl.NewBattleshipFromExisting(r.clients[r.currentPlayer], &wc)
+	client.Room = r
+	go r.clients[player].Run()
 }
 
 type Join struct {
@@ -119,35 +144,19 @@ func (rm RoomManager) String() string {
 }
 
 func (rm *RoomManager) joinRoom(client *Client) {
-	player := client.PlayerID
 	if len(rm.rooms) == 0 {
 		log.Println("making first room")
-		room := Room{maxPlayers: 2, clients: make(map[string]*gl.Battleship), currentPlayer: player, messages: make(chan roomMessage)}
-		wc := gl.WriteClient{client.Conn, make(chan interface{})}
-		go wc.WritePump()
-		room.clients[player] = gl.NewBattleship(&wc)
+		room := NewRoom(2, client)
 		rm.rooms = append(rm.rooms, room)
-		client.Room = &room
-		go room.Run()
-		go room.clients[player].Run()
+
 	} else {
 		if rm.rooms[len(rm.rooms)-1].isFull() {
 			log.Println("room is full, making new room")
-			room := Room{maxPlayers: 2, clients: make(map[string]*gl.Battleship), currentPlayer: player, messages: make(chan roomMessage)}
-			wc := gl.WriteClient{client.Conn, make(chan interface{})}
-			go wc.WritePump()
-			room.clients[player] = gl.NewBattleship(&wc)
+			room := NewRoom(2, client)
 			rm.rooms = append(rm.rooms, room)
-			client.Room = &room
-			go room.Run()
-			go room.clients[player].Run()
 		} else {
 			log.Println("joining room")
-			wc := gl.WriteClient{client.Conn, make(chan interface{})}
-			go wc.WritePump()
-			rm.rooms[len(rm.rooms)-1].clients[player] = gl.NewBattleshipFromExisting(rm.rooms[len(rm.rooms)-1].clients[rm.rooms[len(rm.rooms)-1].currentPlayer], &wc)
-			client.Room = &rm.rooms[len(rm.rooms)-1]
-			go rm.rooms[len(rm.rooms)-1].clients[player].Run()
+			rm.rooms[len(rm.rooms)-1].joinPlayer(client)
 		}
 	}
 }
