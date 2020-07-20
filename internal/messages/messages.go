@@ -86,3 +86,37 @@ func NewBoardMessage(shipSizes []int) boardMessage {
 		ShipSizes: shipSizes,
 	}
 }
+
+type awaitingPlayersMessage struct {
+	Type string `json:"type"`
+}
+
+func NewAwaitingPlayersMessage() awaitingPlayersMessage {
+	return awaitingPlayersMessage{
+		Type: "AWAITING_PLAYERS",
+	}
+}
+
+type gameStartedMessage struct {
+	Type string `json:"type"`
+	Turn bool   `json:"turn"`
+}
+
+func NewGameStartedMessage(turn bool) gameStartedMessage {
+	return gameStartedMessage{
+		Type: "GAME_STARTED",
+		Turn: turn,
+	}
+}
+
+type turnMessage struct {
+	Type string `json:"type"`
+	Turn bool   `json:"turn"`
+}
+
+func NewTurnMessage(turn bool) turnMessage {
+	return turnMessage{
+		Type: "TURN",
+		Turn: turn,
+	}
+}

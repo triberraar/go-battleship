@@ -163,6 +163,16 @@ func (rm *RoomManager) joinRoom(client *Client) {
 			log.Printf("nother one %v", rm.rooms[len(rm.rooms)-1].players)
 		}
 	}
+	if rm.rooms[len(rm.rooms)-1].isFull() {
+		for _, pl := range rm.rooms[len(rm.rooms)-1].players {
+			rm.rooms[len(rm.rooms)-1].clients[pl].SendMessage(messages.NewGameStartedMessage(pl == rm.rooms[len(rm.rooms)-1].currentPlayer))
+		}
+	} else {
+		for _, pl := range rm.rooms[len(rm.rooms)-1].players {
+			rm.rooms[len(rm.rooms)-1].clients[pl].SendMessage(messages.NewAwaitingPlayersMessage())
+		}
+		// send waiting for players to all players
+	}
 }
 
 func (rm *RoomManager) Run() {
@@ -189,6 +199,9 @@ func (r *Room) Run() {
 				r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
 				r.currentPlayer = r.players[r.currentPlayerIndex]
 				r.clients[rm.playerID].Messages <- rm.message
+				for _, pl := range r.players {
+					r.clients[pl].SendMessage(messages.NewTurnMessage(pl == r.currentPlayer))
+				}
 			}
 		}
 	}

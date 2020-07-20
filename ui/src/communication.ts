@@ -1,4 +1,5 @@
 import BoardManager from './board'
+import FeedbackText from './feedbackText'
 
 interface Coordinate {
   x: number
@@ -26,8 +27,17 @@ interface boardMessage {
   shipSizes: number[]
 }
 
+interface gameStartedMessage {
+  turn: boolean
+}
+
+interface turnMessage {
+  turn: boolean
+}
+
 export default class CommunicationManager {
   private boardManager: BoardManager
+  private feedbackText: FeedbackText
   private ws: WebSocket
   constructor() {
     const loc = window.location
@@ -89,6 +99,14 @@ export default class CommunicationManager {
         this.onBoard(m)
         break
       }
+      case 'GAME_STARTED': {
+        this.onGameStarted(m)
+        break
+      }
+      case 'TURN': {
+        this.onTurn(m)
+        break
+      }
     }
   }
 
@@ -98,6 +116,10 @@ export default class CommunicationManager {
 
   setBoardManager(boardManager: BoardManager) {
     this.boardManager = boardManager
+  }
+
+  setFeedbackText(fd: FeedbackText) {
+    this.feedbackText = fd
   }
 
   fire(x: number, y: number) {
@@ -127,5 +149,21 @@ export default class CommunicationManager {
   onBoard(m: boardMessage) {
     console.log(this.boardManager)
     this.boardManager.ships(m.shipSizes)
+  }
+
+  onGameStarted(m: gameStartedMessage) {
+    if (m.turn) {
+      this.feedbackText.setText('Your turn')
+    } else {
+      this.feedbackText.setText('Waiting for the other dummy')
+    }
+  }
+
+  onTurn(m: turnMessage) {
+    if (m.turn) {
+      this.feedbackText.setText('Your turn')
+    } else {
+      this.feedbackText.setText('Waiting for the other dummy')
+    }
   }
 }

@@ -75,6 +75,10 @@ type Battleship struct {
 	victory   bool
 }
 
+func (bs *Battleship) SendMessage(message interface{}) {
+	bs.client.Send <- message
+}
+
 func (bs *Battleship) Run() {
 
 	for {

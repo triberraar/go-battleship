@@ -1,5 +1,6 @@
 import BoardManager from '../board'
 import CommunicationManager from '../communication'
+import FeedbackText from '../feedbackText'
 
 export default class SeaScene extends Phaser.Scene {
   private boardManager: BoardManager
@@ -61,6 +62,7 @@ export default class SeaScene extends Phaser.Scene {
     this.communicationManager = new CommunicationManager()
     this.boardManager = new BoardManager(this, 10, 10, this.communicationManager)
     this.communicationManager.setBoardManager(this.boardManager)
+    this.communicationManager.setFeedbackText(new FeedbackText(this))
     this.communicationManager.play()
   }
 
