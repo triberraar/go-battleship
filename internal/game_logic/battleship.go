@@ -123,6 +123,8 @@ func NewBattleship(wc *WriteClient) *Battleship {
 	for i := 0; i < len(bs.ships); i++ {
 		shipSizes[i] = bs.ships[i].size
 	}
+	go wc.WritePump()
+	go bs.Run()
 	bs.client.Send <- messages.NewBoardMessage(shipSizes[:])
 	return &bs
 }
@@ -158,6 +160,8 @@ func NewBattleshipFromExisting(bs *Battleship, wc *WriteClient) *Battleship {
 	for i := 0; i < len(bs.ships); i++ {
 		shipSizes[i] = bs.ships[i].size
 	}
+	go wc.WritePump()
+	go nbs.Run()
 	nbs.client.Send <- messages.NewBoardMessage(shipSizes[:])
 	return &nbs
 }

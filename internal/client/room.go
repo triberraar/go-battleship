@@ -53,10 +53,10 @@ func (c *Client) ReadPump() {
 		bm := messages.BaseMessage{}
 		json.Unmarshal(message, &bm)
 		if bm.Type == "PLAY" {
+			log.Println("sending to room manager")
 			c.RoomManager.Joins <- NewJoin(c)
-		}
-		if c.Room != nil {
-			c.Room.messages <- roomMessage{c.PlayerID, message}
+		} else if c.Room != nil {
+			c.Room.playerMessages <- roomMessage{c.PlayerID, message}
 		} else {
 			log.Println("no room to send message")
 		}
@@ -78,35 +78,36 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 }
 
 type Room struct {
-	maxPlayers    int
-	clients       map[string]*gl.Battleship
-	currentPlayer string
-	players       []string
-	messages      chan roomMessage
+	maxPlayers         int
+	clients            map[string]*gl.Battleship
+	currentPlayer      string
+	currentPlayerIndex int
+	players            []string
+	playerMessages     chan roomMessage
 }
 
-func NewRoom(maxPlayers int, client *Client) Room {
+func NewRoom(maxPlayers int, client *Client) *Room {
 	player := client.PlayerID
-	pl := make([]string, maxPlayers)
+	pl := []string{}
 	pl = append(pl, player)
 	wc := gl.WriteClient{client.Conn, make(chan interface{})}
-	go wc.WritePump()
-	r := Room{maxPlayers: 2, clients: make(map[string]*gl.Battleship), currentPlayer: player, messages: make(chan roomMessage), players: pl}
+	r := Room{maxPlayers: maxPlayers, clients: make(map[string]*gl.Battleship), currentPlayer: player, playerMessages: make(chan roomMessage), players: pl, currentPlayerIndex: 0}
 	r.clients[player] = gl.NewBattleship(&wc)
 	client.Room = &r
-	go r.Run()
-	go r.clients[player].Run()
-	return r
+	r.currentPlayerIndex = 20
+	return &r
 }
 
 func (r *Room) joinPlayer(client *Client) {
 	wc := gl.WriteClient{client.Conn, make(chan interface{})}
 	player := client.PlayerID
-	go wc.WritePump()
 	r.players = append(r.players, player)
 	r.clients[player] = gl.NewBattleshipFromExisting(r.clients[r.currentPlayer], &wc)
 	client.Room = r
-	go r.clients[player].Run()
+	log.Printf("len %d", len(r.players))
+	log.Printf("stuff %v", r.players)
+	log.Printf("clients %d", len(r.clients))
+	r.currentPlayerIndex = 50
 }
 
 type Join struct {
@@ -124,12 +125,12 @@ func (r Room) String() string {
 }
 
 func (r *Room) isFull() bool {
-	log.Printf("maxPlayers %d, current players %d", r.maxPlayers, len(r.clients))
+	// log.Printf("maxPlayers %d, current players %d", r.maxPlayers, len(r.clients))
 	return len(r.clients) == r.maxPlayers
 }
 
 type RoomManager struct {
-	rooms []Room
+	rooms []*Room
 	Joins chan Join
 }
 
@@ -148,15 +149,18 @@ func (rm *RoomManager) joinRoom(client *Client) {
 		log.Println("making first room")
 		room := NewRoom(2, client)
 		rm.rooms = append(rm.rooms, room)
-
+		go room.Run()
 	} else {
 		if rm.rooms[len(rm.rooms)-1].isFull() {
 			log.Println("room is full, making new room")
+			log.Printf("nother one %v", rm.rooms[len(rm.rooms)-1].players)
 			room := NewRoom(2, client)
 			rm.rooms = append(rm.rooms, room)
+			go room.Run()
 		} else {
 			log.Println("joining room")
 			rm.rooms[len(rm.rooms)-1].joinPlayer(client)
+			log.Printf("nother one %v", rm.rooms[len(rm.rooms)-1].players)
 		}
 	}
 }
@@ -166,8 +170,8 @@ func (rm *RoomManager) Run() {
 	for {
 		select {
 		case jm := <-rm.Joins:
+			log.Println("room manager got a join message")
 			rm.joinRoom(jm.client)
-
 		case <-ticker.C:
 			log.Println(rm)
 		}
@@ -177,8 +181,15 @@ func (rm *RoomManager) Run() {
 func (r *Room) Run() {
 	for {
 		select {
-		case rm := <-r.messages:
-			r.clients[rm.playerID].Messages <- rm.message
+		case rm := <-r.playerMessages:
+			if !r.isFull() {
+			} else if rm.playerID != r.currentPlayer {
+				log.Println("Other player sends message, skip")
+			} else {
+				r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
+				r.currentPlayer = r.players[r.currentPlayerIndex]
+				r.clients[rm.playerID].Messages <- rm.message
+			}
 		}
 	}
 }
