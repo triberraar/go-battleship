@@ -1,5 +1,5 @@
 ui/node_modules
 bin
-dist
 node_modules
 static
+game.js
