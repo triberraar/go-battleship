@@ -1,12 +1,12 @@
 import commonjs from 'rollup-plugin-commonjs'
 import resolve from 'rollup-plugin-node-resolve'
 import replace from '@rollup/plugin-replace'
-import serve from 'rollup-plugin-serve'
+import { uglify } from 'rollup-plugin-uglify'
 import typescript from 'rollup-plugin-typescript2'
 
 export default {
   //  Our games entry point (edit as required)
-  input: ['./src/game.ts'],
+  input: ['./ui/game.ts'],
 
   //  Where the build file is to be generated.
   //  Most games being built for distribution can use iife as the module type.
@@ -16,7 +16,7 @@ export default {
     file: './dist/game.js',
     name: 'MyGame',
     format: 'iife',
-    sourcemap: true,
+    sourcemap: false,
     intro: 'var global = window;'
   },
 
@@ -40,22 +40,16 @@ export default {
     commonjs({
       include: ['node_modules/eventemitter3/**', 'node_modules/phaser/**', 'node_modules/phaser3-rex-plugins/**'],
       exclude: ['node_modules/phaser/src/polyfills/requestAnimationFrame.js'],
-      sourceMap: true,
+      sourceMap: false,
       ignoreGlobal: true
     }),
 
     //  See https://www.npmjs.com/package/rollup-plugin-typescript2 for config options
-    typescript(),
+    typescript()
 
-    //  See https://www.npmjs.com/package/rollup-plugin-serve for config options
-    serve({
-      open: true,
-      contentBase: 'dist',
-      host: 'localhost',
-      port: 10001,
-      headers: {
-        'Access-Control-Allow-Origin': '*'
-      }
-    })
+    //  See https://www.npmjs.com/package/rollup-plugin-uglify for config options
+    // uglify({
+    //   mangle: false
+    // })
   ]
 }
