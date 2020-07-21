@@ -163,6 +163,10 @@ export default class BoardManager {
     setTimeout(() => this.backToMenu(), 6000)
   }
 
+  loss() {
+    setTimeout(() => this.backToMenu(), 6000)
+  }
+
   ships(shipSizes: number[]) {
     shipSizes.sort()
     const os = shipSizes.map((s, i) => {

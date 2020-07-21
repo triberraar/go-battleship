@@ -13,110 +13,120 @@ type Coordinate struct {
 
 // HitMessage send to player when he hits stuff
 type hitMessage struct {
-	Type       string     `json:"type"`
+	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 }
 
 // MissMessage send to player when he misses stuff
 type missMessage struct {
-	Type       string     `json:"type"`
+	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 }
 
 type shipDestroyedMessage struct {
-	Type       string     `json:"type"`
+	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 	ShipSize   int        `json:"shipSize"`
 	Vertical   bool       `json:"vertical"`
 }
 
-type victoryMessage struct {
-	Type string `json:"type"`
+type VictoryMessage struct {
+	BaseMessage
+}
+
+type LossMessage struct {
+	BaseMessage
 }
 
 type boardMessage struct {
-	Type      string `json:"type"`
-	ShipSizes []int  `json:"shipSizes"`
+	BaseMessage
+	ShipSizes []int `json:"shipSizes"`
 }
 
 // FireMessage sent by player when he fires somewhere
 type FireMessage struct {
-	Type       string     `json:"type"`
+	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 }
 
 type PlayMessage struct {
-	Type string `json:"type"`
+	BaseMessage
 }
 
 // NewHitMessage constructor function
 func NewHitMessage(coordinate Coordinate) hitMessage {
 	return hitMessage{
-		Type:       "HIT",
-		Coordinate: coordinate,
+		BaseMessage: BaseMessage{Type: "HIT"},
+		Coordinate:  coordinate,
 	}
 }
 
 // NewMissMessage constructor function
 func NewMissMessage(coordinate Coordinate) missMessage {
 	return missMessage{
-		Type:       "MISS",
-		Coordinate: coordinate,
+		BaseMessage: BaseMessage{Type: "MISS"},
+		Coordinate:  coordinate,
 	}
 }
 
 func NewShipDestroyedMessage(coordinate Coordinate, shipSize int, vertical bool) shipDestroyedMessage {
 	return shipDestroyedMessage{
-		Type:       "SHIP_DESTROYED",
-		Coordinate: coordinate,
-		ShipSize:   shipSize,
-		Vertical:   vertical,
+		BaseMessage: BaseMessage{Type: "SHIP_DESTROYED"},
+		Coordinate:  coordinate,
+		ShipSize:    shipSize,
+		Vertical:    vertical,
 	}
 }
 
-func NewVictoryMessage() victoryMessage {
-	return victoryMessage{
-		Type: "VICTORY",
+func NewVictoryMessage() VictoryMessage {
+	return VictoryMessage{
+		BaseMessage{Type: "VICTORY"},
+	}
+}
+
+func NewLossMessage() LossMessage {
+	return LossMessage{
+		BaseMessage{Type: "LOSS"},
 	}
 }
 
 func NewBoardMessage(shipSizes []int) boardMessage {
 	return boardMessage{
-		Type:      "BOARD",
-		ShipSizes: shipSizes,
+		BaseMessage: BaseMessage{Type: "BOARD"},
+		ShipSizes:   shipSizes,
 	}
 }
 
 type awaitingPlayersMessage struct {
-	Type string `json:"type"`
+	BaseMessage
 }
 
 func NewAwaitingPlayersMessage() awaitingPlayersMessage {
 	return awaitingPlayersMessage{
-		Type: "AWAITING_PLAYERS",
+		BaseMessage{Type: "AWAITING_PLAYERS"},
 	}
 }
 
 type gameStartedMessage struct {
-	Type string `json:"type"`
-	Turn bool   `json:"turn"`
+	BaseMessage
+	Turn bool `json:"turn"`
 }
 
 func NewGameStartedMessage(turn bool) gameStartedMessage {
 	return gameStartedMessage{
-		Type: "GAME_STARTED",
-		Turn: turn,
+		BaseMessage: BaseMessage{Type: "GAME_STARTED"},
+		Turn:        turn,
 	}
 }
 
-type turnMessage struct {
-	Type string `json:"type"`
-	Turn bool   `json:"turn"`
+type TurnMessage struct {
+	BaseMessage
+	Turn bool `json:"turn"`
 }
 
-func NewTurnMessage(turn bool) turnMessage {
-	return turnMessage{
-		Type: "TURN",
-		Turn: turn,
+func NewTurnMessage(turn bool) TurnMessage {
+	return TurnMessage{
+		BaseMessage: BaseMessage{Type: "TURN"},
+		Turn:        turn,
 	}
 }

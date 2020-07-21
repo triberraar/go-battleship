@@ -4,6 +4,10 @@ Proof of concept battleship game.
 Ui written with phaser 3 and typescript.
 Backend written in golang with gorilla
 
+## demo
+
+on heroku: https://whispering-caverns-71033.herokuapp.com/
+
 ## How to build
 
 This should be made more simple but time and all that.

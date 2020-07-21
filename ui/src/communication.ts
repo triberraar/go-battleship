@@ -95,6 +95,10 @@ export default class CommunicationManager {
         this.onVictory()
         break
       }
+      case 'LOSS': {
+        this.onLoss()
+        break
+      }
       case 'BOARD': {
         this.onBoard(m)
         break
@@ -143,7 +147,13 @@ export default class CommunicationManager {
   }
   onVictory() {
     this.boardManager.victory()
+    this.feedbackText.setText('You win')
     this.close()
+  }
+
+  onLoss() {
+    this.boardManager.loss()
+    this.feedbackText.setText('The other dummy won, loser')
   }
 
   onBoard(m: boardMessage) {
