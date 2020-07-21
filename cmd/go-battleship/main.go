@@ -28,7 +28,7 @@ func main() {
 	router.HandleFunc("/battleship", func(w http.ResponseWriter, r *http.Request) {
 		bsHandlers.Battleship(rm, w, r)
 	})
-	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
+	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("dist/"))))
 	log.Printf("Server listening on %s for shure", port)
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
