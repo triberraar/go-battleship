@@ -6,33 +6,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
-
-const (
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
-)
-
-type WriteClient struct {
-	Conn *websocket.Conn
-	Send chan interface{}
-}
-
-func (c *WriteClient) WritePump() {
-	ticker := time.NewTicker(pingPeriod)
-	for {
-		select {
-		case message := <-c.Send:
-			c.Conn.WriteJSON(message)
-		case <-ticker.C:
-			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
-		}
-	}
-}
 
 type OutMessage struct {
 	PlayerID string
