@@ -146,6 +146,14 @@ func (bs *Battleship) NewBattleshipFromExisting(playerID string) *Battleship {
 	return &nbs
 }
 
+func (bs Battleship) GetInMessages() chan []byte {
+	return bs.InMessages
+}
+
+func (bs Battleship) GetOutMessages() chan messages.GameMessage {
+	return bs.OutMessages
+}
+
 func (b *Battleship) newBoard() {
 	b.board = make([][]tile, b.dimension)
 	for i := 0; i < b.dimension; i++ {

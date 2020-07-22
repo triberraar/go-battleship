@@ -6,13 +6,13 @@ import (
 
 	"github.com/triberraar/go-battleship/internal/client"
 	cl "github.com/triberraar/go-battleship/internal/client"
-	"github.com/triberraar/go-battleship/internal/game/battleship"
+	"github.com/triberraar/go-battleship/internal/game"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
 type Player struct {
 	playerID string
-	game     *battleship.Battleship
+	game     game.Game
 	client   *client.Client
 }
 
@@ -33,9 +33,11 @@ func (r *Room) joinPlayer(client *cl.Client) {
 	playerID := client.PlayerID
 	r.playersInOrder = append(r.playersInOrder, playerID)
 	if len(r.players) == 0 {
-		r.players[playerID] = &Player{playerID: playerID, game: battleship.NewBattleship(playerID), client: client}
+		game, _ := game.NewGame("battleship", playerID)
+		r.players[playerID] = &Player{playerID: playerID, game: game, client: client}
 	} else {
-		r.players[playerID] = &Player{playerID: playerID, game: r.players[r.currentPlayerID()].game.NewBattleshipFromExisting(playerID), client: client}
+		game, _ := game.NewGameFromExistion(r.players[r.currentPlayerID()].game, playerID)
+		r.players[playerID] = &Player{playerID: playerID, game: game, client: client}
 	}
 	r.aggregateMessages(playerID)
 	if r.isFull() {
@@ -52,7 +54,7 @@ func (r *Room) aggregateMessages(playerID string) {
 		for msg := range c {
 			r.aggregateGameMessages <- msg
 		}
-	}(r.players[playerID].game.OutMessages)
+	}(r.players[playerID].game.GetOutMessages())
 	go func(c chan cl.ClientMessage) {
 		for msg := range c {
 			r.aggregateClientMessages <- msg
@@ -81,7 +83,7 @@ func (r *Room) Run() {
 			} else if rm.PlayerID != r.currentPlayerID() {
 				log.Println("Other player sends message, skip")
 			} else {
-				r.players[rm.PlayerID].game.InMessages <- rm.Message
+				r.players[rm.PlayerID].game.GetInMessages() <- rm.Message
 			}
 		case m := <-r.aggregateGameMessages:
 			switch m.Message.(type) {
@@ -93,7 +95,7 @@ func (r *Room) Run() {
 			case messages.VictoryMessage:
 				for _, pl := range r.players {
 					if pl.playerID == r.currentPlayerID() {
-						r.players[pl.playerID].client.OutMessages <- m
+						r.players[pl.playerID].client.OutMessages <- m.Message
 					} else {
 						r.players[pl.playerID].client.OutMessages <- messages.NewLossMessage()
 					}
