@@ -20,36 +20,28 @@ type Player struct {
 type Room struct {
 	maxPlayers              int
 	players                 map[string]*Player
-	currentPlayer           string
 	currentPlayerIndex      int
 	playersInOrder          []string
 	aggregateGameMessages   chan game.GameMessage
 	aggregateClientMessages chan client.ClientMessage
 }
 
-func NewRoom(maxPlayers int, client *cl.Client) *Room {
-	player := client.PlayerID
-	pl := []string{}
-	pl = append(pl, player)
-	r := Room{maxPlayers: maxPlayers, players: make(map[string]*Player), currentPlayer: player, playersInOrder: pl, currentPlayerIndex: 0, aggregateGameMessages: make(chan game.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10)}
-	r.players[player] = &Player{playerID: player, game: battleship.NewBattleship(player), client: client}
-	go func(c chan game.GameMessage) {
-		for msg := range c {
-			r.aggregateGameMessages <- msg
-		}
-	}(r.players[player].game.OutMessages)
-	go func(c chan cl.ClientMessage) {
-		for msg := range c {
-			r.aggregateClientMessages <- msg
-		}
-	}(r.players[player].client.InMessages)
-	return &r
+func NewRoom(maxPlayers int) *Room {
+	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan game.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10)}
+}
+
+func (r *Room) currentPlayerID() string {
+	return r.playersInOrder[r.currentPlayerIndex]
 }
 
 func (r *Room) joinPlayer(client *cl.Client) {
 	player := client.PlayerID
 	r.playersInOrder = append(r.playersInOrder, player)
-	r.players[player] = &Player{playerID: player, game: battleship.NewBattleshipFromExisting(r.players[r.currentPlayer].game, player), client: client}
+	if len(r.players) == 0 {
+		r.players[player] = &Player{playerID: player, game: battleship.NewBattleship(player), client: client}
+	} else {
+		r.players[player] = &Player{playerID: player, game: battleship.NewBattleshipFromExisting(r.players[r.currentPlayerID()].game, player), client: client}
+	}
 	go func(c chan game.GameMessage) {
 		for msg := range c {
 			r.aggregateGameMessages <- msg
@@ -60,10 +52,18 @@ func (r *Room) joinPlayer(client *cl.Client) {
 			r.aggregateClientMessages <- msg
 		}
 	}(r.players[player].client.InMessages)
+
+	if r.isFull() {
+		for _, pl := range r.players {
+			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.playerID == r.currentPlayerID())
+		}
+	} else {
+		r.players[player].client.OutMessages <- messages.NewAwaitingPlayersMessage()
+	}
 }
 
 func (r Room) String() string {
-	return fmt.Sprintf("Hej i am a room and can hold %d and have %d and it is this players turn: %s", r.maxPlayers, len(r.playersInOrder), r.currentPlayer)
+	return fmt.Sprintf("Hej i am a room and can hold %d and have %d and it is this players turn: %s", r.maxPlayers, len(r.playersInOrder), r.currentPlayerID())
 }
 
 func (r *Room) isFull() bool {
@@ -76,7 +76,7 @@ func (r *Room) Run() {
 		case rm := <-r.aggregateClientMessages:
 			if !r.isFull() {
 				log.Println("room not full, skipping")
-			} else if rm.PlayerID != r.currentPlayer {
+			} else if rm.PlayerID != r.currentPlayerID() {
 				log.Println("Other player sends message, skip")
 			} else {
 				r.players[rm.PlayerID].game.InMessages <- rm.Message
@@ -85,13 +85,12 @@ func (r *Room) Run() {
 			switch m.Message.(type) {
 			case messages.TurnMessage:
 				r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
-				r.currentPlayer = r.playersInOrder[r.currentPlayerIndex]
 				for _, pl := range r.players {
-					r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayer)
+					r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayerID())
 				}
 			case messages.VictoryMessage:
 				for _, pl := range r.players {
-					if pl.playerID == r.currentPlayer {
+					if pl.playerID == r.currentPlayerID() {
 						r.players[pl.playerID].client.OutMessages <- messages.NewVictoryMessage()
 					} else {
 						r.players[pl.playerID].client.OutMessages <- messages.NewLossMessage()
