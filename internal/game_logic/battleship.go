@@ -34,6 +34,11 @@ func (c *WriteClient) WritePump() {
 	}
 }
 
+type OutMessage struct {
+	PlayerID string
+	Message  interface{}
+}
+
 type ship struct {
 	x        int
 	y        int
@@ -66,8 +71,9 @@ func (t *tile) hasShip() bool {
 }
 
 type Battleship struct {
-	Messages chan []byte
-	client   *WriteClient
+	InMessages  chan []byte
+	OutMessages chan OutMessage
+	playerID    string
 
 	board     [][]tile
 	dimension int
@@ -76,69 +82,72 @@ type Battleship struct {
 }
 
 func (bs *Battleship) SendMessage(message interface{}) {
-	bs.client.Send <- message
+	bs.OutMessages <- OutMessage{bs.playerID, message}
 }
 
 func (bs *Battleship) Run() {
 
 	for {
-		select {
-		case message := <-bs.Messages:
-			bm := messages.BaseMessage{}
-			json.Unmarshal(message, &bm)
-			if bm.Type == "FIRE" && !bs.victory {
-				fm := messages.FireMessage{}
-				json.Unmarshal(message, &fm)
-				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
-					continue
-				}
-				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
+		message := <-bs.InMessages
+		bm := messages.BaseMessage{}
+		json.Unmarshal(message, &bm)
+		if bm.Type == "FIRE" && !bs.victory {
+			fm := messages.FireMessage{}
+			json.Unmarshal(message, &fm)
+			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
+				continue
+			}
+			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
 
-					bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
-					bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
-					if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
-						coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
-						bs.client.Send <- messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical)
-					} else {
-						bs.client.Send <- messages.NewHitMessage(fm.Coordinate)
-					}
-					if bs.hasVictory() {
-						bs.victory = true
-						bs.client.Send <- messages.NewVictoryMessage()
-					}
+				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+				bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
+				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
+					coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
+					// bs.client.Send <- messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical)
+					bs.SendMessage(messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
 				} else {
-					bs.client.Send <- messages.NewMissMessage(fm.Coordinate)
-					bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+					bs.SendMessage(messages.NewHitMessage(fm.Coordinate))
 				}
+				if bs.hasVictory() {
+					bs.victory = true
+					bs.SendMessage(messages.NewVictoryMessage())
+				}
+			} else {
+				bs.SendMessage(messages.NewMissMessage(fm.Coordinate))
+				log.Printf("player %s missed", bs.playerID)
+				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
 			}
 		}
 	}
 }
 
-func NewBattleship(wc *WriteClient) *Battleship {
+func NewBattleship(playerID string) *Battleship {
 	bs := Battleship{
-		dimension: 10,
-		victory:   false,
-		Messages:  make(chan []byte),
-		client:    wc,
+		dimension:   10,
+		victory:     false,
+		InMessages:  make(chan []byte, 10),
+		OutMessages: make(chan OutMessage, 10),
+		playerID:    playerID,
 	}
 	bs.newBoard()
 	var shipSizes [len(bs.ships)]int
 	for i := 0; i < len(bs.ships); i++ {
 		shipSizes[i] = bs.ships[i].size
 	}
-	go wc.WritePump()
 	go bs.Run()
-	bs.client.Send <- messages.NewBoardMessage(shipSizes[:])
+	log.Println("1")
+	bs.SendMessage(messages.NewBoardMessage(shipSizes[:]))
+	log.Println("2")
 	return &bs
 }
 
-func NewBattleshipFromExisting(bs *Battleship, wc *WriteClient) *Battleship {
+func NewBattleshipFromExisting(bs *Battleship, playerID string) *Battleship {
 	nbs := Battleship{
-		dimension: bs.dimension,
-		victory:   false,
-		Messages:  make(chan []byte),
-		client:    wc,
+		dimension:   bs.dimension,
+		victory:     false,
+		InMessages:  make(chan []byte, 10),
+		OutMessages: make(chan OutMessage, 10),
+		playerID:    playerID,
 	}
 
 	board := make([][]tile, len(bs.board))
@@ -164,9 +173,8 @@ func NewBattleshipFromExisting(bs *Battleship, wc *WriteClient) *Battleship {
 	for i := 0; i < len(bs.ships); i++ {
 		shipSizes[i] = bs.ships[i].size
 	}
-	go wc.WritePump()
 	go nbs.Run()
-	nbs.client.Send <- messages.NewBoardMessage(shipSizes[:])
+	nbs.SendMessage(messages.NewBoardMessage(shipSizes[:]))
 	return &nbs
 }
 

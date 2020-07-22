@@ -23,8 +23,8 @@ func Battleship(rm *client.RoomManager, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	pid := uuid.New()
-	client := &client.Client{Conn: c, RoomManager: rm, PlayerID: pid.String()}
+	client := &client.Client{Conn: c, PlayerID: pid.String(), OutMessages: make(chan interface{}, 10)}
 
 	go client.ReadPump()
-
+	go client.WritePump()
 }

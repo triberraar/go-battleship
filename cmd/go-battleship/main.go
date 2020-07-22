@@ -24,6 +24,7 @@ func main() {
 	router := mux.NewRouter()
 	rm := client.NewRoomManager()
 	go rm.Run()
+	client.RM = rm
 	// router.HandleFunc("/battleship", bsHandlers.Battleship)
 	router.HandleFunc("/battleship", func(w http.ResponseWriter, r *http.Request) {
 		bsHandlers.Battleship(rm, w, r)
