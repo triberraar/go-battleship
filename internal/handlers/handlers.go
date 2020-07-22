@@ -23,8 +23,7 @@ func Battleship(rm *room.RoomManager, w http.ResponseWriter, r *http.Request) {
 		log.Print("upgrade:", err)
 		return
 	}
-	pid := uuid.New()
-	client := &client.Client{Conn: c, PlayerID: pid.String(), OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10)}
+	client := &client.Client{Conn: c, PlayerID: uuid.New().String(), OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10)}
 
 	rm.JoinRoom(client)
 

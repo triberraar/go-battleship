@@ -23,8 +23,6 @@ func main() {
 	log.SetFlags(0)
 	router := mux.NewRouter()
 	rm := room.NewRoomManager()
-	go rm.Run()
-	// router.HandleFunc("/battleship", bsHandlers.Battleship)
 	router.HandleFunc("/battleship", func(w http.ResponseWriter, r *http.Request) {
 		bsHandlers.Battleship(rm, w, r)
 	})

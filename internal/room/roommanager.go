@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/triberraar/go-battleship/internal/client"
 	"github.com/triberraar/go-battleship/internal/messages"
@@ -51,12 +50,4 @@ func (rm *RoomManager) JoinRoom(client *client.Client) {
 		}
 	}
 	rm.joinMutex.Unlock()
-}
-
-func (rm *RoomManager) Run() {
-	ticker := time.NewTicker(60 * time.Second)
-	for {
-		<-ticker.C
-		log.Println(rm)
-	}
 }
