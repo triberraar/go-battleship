@@ -3,6 +3,7 @@ package room
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/triberraar/go-battleship/internal/client"
 	cl "github.com/triberraar/go-battleship/internal/client"
@@ -23,6 +24,7 @@ type Room struct {
 	playersInOrder          []string
 	aggregateGameMessages   chan messages.GameMessage
 	aggregateClientMessages chan client.ClientMessage
+	waitTimer               *time.Timer
 }
 
 func NewRoom(maxPlayers int) *Room {
@@ -44,6 +46,7 @@ func (r *Room) joinPlayer(client *cl.Client) {
 		for _, pl := range r.players {
 			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.playerID == r.currentPlayerID())
 		}
+		r.waitForAction()
 	} else {
 		r.players[playerID].client.OutMessages <- messages.NewAwaitingPlayersMessage()
 	}
@@ -83,15 +86,14 @@ func (r *Room) Run() {
 			} else if rm.PlayerID != r.currentPlayerID() {
 				log.Println("Other player sends message, skip")
 			} else {
+				r.waitTimer.Stop()
 				r.players[rm.PlayerID].game.GetInMessages() <- rm.Message
+				r.waitForAction()
 			}
 		case m := <-r.aggregateGameMessages:
 			switch m.Message.(type) {
 			case messages.TurnMessage:
-				r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
-				for _, pl := range r.players {
-					r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayerID())
-				}
+				r.nextPlayer()
 			case messages.VictoryMessage:
 				for _, pl := range r.players {
 					if pl.playerID == r.currentPlayerID() {
@@ -108,4 +110,19 @@ func (r *Room) Run() {
 		}
 
 	}
+}
+
+func (r *Room) waitForAction() {
+	r.waitTimer = time.AfterFunc(15*time.Second, func() {
+		r.nextPlayer()
+	})
+}
+
+func (r *Room) nextPlayer() {
+	r.waitTimer.Stop()
+	r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
+	for _, pl := range r.players {
+		r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayerID())
+	}
+	r.waitForAction()
 }
