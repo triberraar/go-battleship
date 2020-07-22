@@ -114,7 +114,6 @@ func (bs *Battleship) Run() {
 				}
 			} else {
 				bs.SendMessage(messages.NewMissMessage(fm.Coordinate))
-				log.Printf("player %s missed", bs.playerID)
 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
 			}
 		}
@@ -135,9 +134,7 @@ func NewBattleship(playerID string) *Battleship {
 		shipSizes[i] = bs.ships[i].size
 	}
 	go bs.Run()
-	log.Println("1")
 	bs.SendMessage(messages.NewBoardMessage(shipSizes[:]))
-	log.Println("2")
 	return &bs
 }
 

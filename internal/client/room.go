@@ -74,7 +74,6 @@ func (c *Client) WritePump() {
 	for {
 		select {
 		case message := <-c.OutMessages:
-			log.Printf("sending on con %v", message)
 			c.Conn.WriteJSON(message)
 		case <-ticker.C:
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -85,12 +84,13 @@ func (c *Client) WritePump() {
 }
 
 type Room struct {
-	maxPlayers         int
-	players            map[string]*Player
-	currentPlayer      string
-	currentPlayerIndex int
-	playersInOrder     []string
-	playerMessages     chan roomMessage
+	maxPlayers            int
+	players               map[string]*Player
+	currentPlayer         string
+	currentPlayerIndex    int
+	playersInOrder        []string
+	playerMessages        chan roomMessage // change this
+	aggregateGameMessages chan gl.OutMessage
 }
 
 type Player struct {
@@ -103,9 +103,14 @@ func NewRoom(maxPlayers int, client *Client) *Room {
 	player := client.PlayerID
 	pl := []string{}
 	pl = append(pl, player)
-	r := Room{maxPlayers: maxPlayers, players: make(map[string]*Player), currentPlayer: player, playerMessages: make(chan roomMessage, 10), playersInOrder: pl, currentPlayerIndex: 0}
+	r := Room{maxPlayers: maxPlayers, players: make(map[string]*Player), currentPlayer: player, playerMessages: make(chan roomMessage, 10), playersInOrder: pl, currentPlayerIndex: 0, aggregateGameMessages: make(chan gl.OutMessage, 10)}
 	r.players[player] = &Player{playerID: player, game: gl.NewBattleship(player), client: client}
 	client.Room = &r
+	go func(c chan gl.OutMessage) {
+		for msg := range c {
+			r.aggregateGameMessages <- msg
+		}
+	}(r.players[player].game.OutMessages)
 	return &r
 }
 
@@ -113,6 +118,11 @@ func (r *Room) joinPlayer(client *Client) {
 	player := client.PlayerID
 	r.playersInOrder = append(r.playersInOrder, player)
 	r.players[player] = &Player{playerID: player, game: gl.NewBattleshipFromExisting(r.players[r.currentPlayer].game, player), client: client}
+	go func(c chan gl.OutMessage) {
+		for msg := range c {
+			r.aggregateGameMessages <- msg
+		}
+	}(r.players[player].game.OutMessages)
 	client.Room = r
 }
 
@@ -163,7 +173,6 @@ func (rm *RoomManager) joinRoom(client *Client) {
 	}
 	if rm.rooms[len(rm.rooms)-1].isFull() {
 		for _, pl := range rm.rooms[len(rm.rooms)-1].players {
-			log.Printf("sending started %s", pl.playerID)
 			rm.rooms[len(rm.rooms)-1].players[pl.playerID].game.SendMessage(messages.NewGameStartedMessage(pl.playerID == rm.rooms[len(rm.rooms)-1].currentPlayer))
 		}
 	} else {
@@ -188,28 +197,23 @@ func (rm *RoomManager) Run() {
 
 func (r *Room) Run() {
 	for {
-		for _, bs := range r.players {
-			select {
-			case rm := <-r.playerMessages:
-				if !r.isFull() {
-					log.Println("room not full, skipping")
-				} else if rm.playerID != r.currentPlayer {
-					log.Println("Other player sends message, skip")
-				} else {
-					r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
-					r.currentPlayer = r.playersInOrder[r.currentPlayerIndex]
-					r.players[rm.playerID].game.InMessages <- rm.message
-					for _, pl := range r.players {
-						r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayer)
-					}
+		select {
+		case rm := <-r.playerMessages:
+			if !r.isFull() {
+				log.Println("room not full, skipping")
+			} else if rm.playerID != r.currentPlayer {
+				log.Println("Other player sends message, skip")
+			} else {
+				r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
+				r.currentPlayer = r.playersInOrder[r.currentPlayerIndex]
+				r.players[rm.playerID].game.InMessages <- rm.message
+				for _, pl := range r.players {
+					r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayer)
 				}
-			case m := <-bs.game.OutMessages:
-				log.Printf("sending to player %s, %v", m.PlayerID, m.Message)
-				r.players[m.PlayerID].client.OutMessages <- m.Message
-			default:
-				log.Println("do nothing")
 			}
-
+		case m := <-r.aggregateGameMessages:
+			r.players[m.PlayerID].client.OutMessages <- m.Message
 		}
+
 	}
 }
