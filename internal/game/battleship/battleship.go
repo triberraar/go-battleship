@@ -1,4 +1,4 @@
-package game_logic
+package battleship
 
 import (
 	"encoding/json"
@@ -6,13 +6,9 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/triberraar/go-battleship/internal/game"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
-
-type GameMessage struct {
-	PlayerID string
-	Message  interface{}
-}
 
 type ship struct {
 	x        int
@@ -47,7 +43,7 @@ func (t *tile) hasShip() bool {
 
 type Battleship struct {
 	InMessages  chan []byte
-	OutMessages chan GameMessage
+	OutMessages chan game.GameMessage
 	playerID    string
 
 	board     [][]tile
@@ -57,7 +53,7 @@ type Battleship struct {
 }
 
 func (bs *Battleship) SendMessage(message interface{}) {
-	bs.OutMessages <- GameMessage{bs.playerID, message}
+	bs.OutMessages <- game.GameMessage{bs.playerID, message}
 }
 
 func (bs *Battleship) Run() {
@@ -101,7 +97,7 @@ func NewBattleship(playerID string) *Battleship {
 		dimension:   10,
 		victory:     false,
 		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan GameMessage, 10),
+		OutMessages: make(chan game.GameMessage, 10),
 		playerID:    playerID,
 	}
 	bs.newBoard()
@@ -119,7 +115,7 @@ func NewBattleshipFromExisting(bs *Battleship, playerID string) *Battleship {
 		dimension:   bs.dimension,
 		victory:     false,
 		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan GameMessage, 10),
+		OutMessages: make(chan game.GameMessage, 10),
 		playerID:    playerID,
 	}
 
