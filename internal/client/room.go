@@ -179,7 +179,6 @@ func (rm *RoomManager) joinRoom(client *Client) {
 		for _, pl := range rm.rooms[len(rm.rooms)-1].players {
 			rm.rooms[len(rm.rooms)-1].players[pl.playerID].game.SendMessage(messages.NewAwaitingPlayersMessage())
 		}
-		// send waiting for players to all players
 	}
 }
 
@@ -204,15 +203,34 @@ func (r *Room) Run() {
 			} else if rm.playerID != r.currentPlayer {
 				log.Println("Other player sends message, skip")
 			} else {
+				// 	r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
+				// 	r.currentPlayer = r.playersInOrder[r.currentPlayerIndex]
+				r.players[rm.playerID].game.InMessages <- rm.message
+				// 	for _, pl := range r.players {
+				// 		r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayer)
+				// }
+			}
+		case m := <-r.aggregateGameMessages:
+			switch m.Message.(type) {
+			case messages.TurnMessage:
 				r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
 				r.currentPlayer = r.playersInOrder[r.currentPlayerIndex]
-				r.players[rm.playerID].game.InMessages <- rm.message
 				for _, pl := range r.players {
 					r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayer)
 				}
+			case messages.VictoryMessage:
+				for _, pl := range r.players {
+					if pl.playerID == r.currentPlayer {
+						r.players[pl.playerID].client.OutMessages <- messages.NewVictoryMessage()
+					} else {
+						r.players[pl.playerID].client.OutMessages <- messages.NewLossMessage()
+					}
+
+				}
+			default:
+				r.players[m.PlayerID].client.OutMessages <- m.Message
 			}
-		case m := <-r.aggregateGameMessages:
-			r.players[m.PlayerID].client.OutMessages <- m.Message
+
 		}
 
 	}

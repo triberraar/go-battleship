@@ -115,6 +115,7 @@ func (bs *Battleship) Run() {
 			} else {
 				bs.SendMessage(messages.NewMissMessage(fm.Coordinate))
 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+				bs.SendMessage(messages.NewTurnMessage(false))
 			}
 		}
 	}
