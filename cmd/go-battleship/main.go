@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/triberraar/go-battleship/internal/client"
 	bsHandlers "github.com/triberraar/go-battleship/internal/handlers"
+	"github.com/triberraar/go-battleship/internal/room"
 )
 
 var addr = flag.String("addr", "localhost:10002", "http service address")
@@ -22,9 +22,8 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 	router := mux.NewRouter()
-	rm := client.NewRoomManager()
+	rm := room.NewRoomManager()
 	go rm.Run()
-	client.RM = rm
 	// router.HandleFunc("/battleship", bsHandlers.Battleship)
 	router.HandleFunc("/battleship", func(w http.ResponseWriter, r *http.Request) {
 		bsHandlers.Battleship(rm, w, r)

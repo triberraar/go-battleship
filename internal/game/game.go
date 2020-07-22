@@ -6,3 +6,7 @@ type GameMessage struct {
 }
 
 //make game interface
+type Game interface {
+	Create()
+	Join()
+}
