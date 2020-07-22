@@ -1,12 +1,11 @@
 package game
 
-type GameMessage struct {
-	PlayerID string
-	Message  interface{}
+type Game interface {
 }
 
-//make game interface
-type Game interface {
-	Create()
-	Join()
-}
+// func NewGame(gameName string) interface{} {
+// 	switch gameName {
+// 	case "battleship":
+// 		return battleship.NewBattleship(playerID)
+// 	}
+// }

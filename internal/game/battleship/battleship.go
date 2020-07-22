@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/triberraar/go-battleship/internal/game"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
@@ -43,7 +42,7 @@ func (t *tile) hasShip() bool {
 
 type Battleship struct {
 	InMessages  chan []byte
-	OutMessages chan game.GameMessage
+	OutMessages chan messages.GameMessage
 	playerID    string
 
 	board     [][]tile
@@ -53,7 +52,7 @@ type Battleship struct {
 }
 
 func (bs *Battleship) SendMessage(message interface{}) {
-	bs.OutMessages <- game.GameMessage{bs.playerID, message}
+	bs.OutMessages <- messages.GameMessage{bs.playerID, message}
 }
 
 func (bs *Battleship) Run() {
@@ -97,7 +96,7 @@ func NewBattleship(playerID string) *Battleship {
 		dimension:   10,
 		victory:     false,
 		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan game.GameMessage, 10),
+		OutMessages: make(chan messages.GameMessage, 10),
 		playerID:    playerID,
 	}
 	bs.newBoard()
@@ -110,12 +109,12 @@ func NewBattleship(playerID string) *Battleship {
 	return &bs
 }
 
-func NewBattleshipFromExisting(bs *Battleship, playerID string) *Battleship {
+func (bs *Battleship) NewBattleshipFromExisting(playerID string) *Battleship {
 	nbs := Battleship{
 		dimension:   bs.dimension,
 		victory:     false,
 		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan game.GameMessage, 10),
+		OutMessages: make(chan messages.GameMessage, 10),
 		playerID:    playerID,
 	}
 

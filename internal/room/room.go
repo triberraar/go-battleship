@@ -6,7 +6,6 @@ import (
 
 	"github.com/triberraar/go-battleship/internal/client"
 	cl "github.com/triberraar/go-battleship/internal/client"
-	"github.com/triberraar/go-battleship/internal/game"
 	"github.com/triberraar/go-battleship/internal/game/battleship"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
@@ -22,44 +21,47 @@ type Room struct {
 	players                 map[string]*Player
 	currentPlayerIndex      int
 	playersInOrder          []string
-	aggregateGameMessages   chan game.GameMessage
+	aggregateGameMessages   chan messages.GameMessage
 	aggregateClientMessages chan client.ClientMessage
 }
 
 func NewRoom(maxPlayers int) *Room {
-	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan game.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10)}
-}
-
-func (r *Room) currentPlayerID() string {
-	return r.playersInOrder[r.currentPlayerIndex]
+	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10)}
 }
 
 func (r *Room) joinPlayer(client *cl.Client) {
-	player := client.PlayerID
-	r.playersInOrder = append(r.playersInOrder, player)
+	playerID := client.PlayerID
+	r.playersInOrder = append(r.playersInOrder, playerID)
 	if len(r.players) == 0 {
-		r.players[player] = &Player{playerID: player, game: battleship.NewBattleship(player), client: client}
+		r.players[playerID] = &Player{playerID: playerID, game: battleship.NewBattleship(playerID), client: client}
 	} else {
-		r.players[player] = &Player{playerID: player, game: battleship.NewBattleshipFromExisting(r.players[r.currentPlayerID()].game, player), client: client}
+		r.players[playerID] = &Player{playerID: playerID, game: r.players[r.currentPlayerID()].game.NewBattleshipFromExisting(playerID), client: client}
 	}
-	go func(c chan game.GameMessage) {
-		for msg := range c {
-			r.aggregateGameMessages <- msg
-		}
-	}(r.players[player].game.OutMessages)
-	go func(c chan cl.ClientMessage) {
-		for msg := range c {
-			r.aggregateClientMessages <- msg
-		}
-	}(r.players[player].client.InMessages)
-
+	r.aggregateMessages(playerID)
 	if r.isFull() {
 		for _, pl := range r.players {
 			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.playerID == r.currentPlayerID())
 		}
 	} else {
-		r.players[player].client.OutMessages <- messages.NewAwaitingPlayersMessage()
+		r.players[playerID].client.OutMessages <- messages.NewAwaitingPlayersMessage()
 	}
+}
+
+func (r *Room) aggregateMessages(playerID string) {
+	go func(c chan messages.GameMessage) {
+		for msg := range c {
+			r.aggregateGameMessages <- msg
+		}
+	}(r.players[playerID].game.OutMessages)
+	go func(c chan cl.ClientMessage) {
+		for msg := range c {
+			r.aggregateClientMessages <- msg
+		}
+	}(r.players[playerID].client.InMessages)
+}
+
+func (r *Room) currentPlayerID() string {
+	return r.playersInOrder[r.currentPlayerIndex]
 }
 
 func (r Room) String() string {
@@ -91,7 +93,7 @@ func (r *Room) Run() {
 			case messages.VictoryMessage:
 				for _, pl := range r.players {
 					if pl.playerID == r.currentPlayerID() {
-						r.players[pl.playerID].client.OutMessages <- messages.NewVictoryMessage()
+						r.players[pl.playerID].client.OutMessages <- m
 					} else {
 						r.players[pl.playerID].client.OutMessages <- messages.NewLossMessage()
 					}
