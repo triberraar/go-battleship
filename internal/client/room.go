@@ -90,7 +90,7 @@ type Room struct {
 	currentPlayerIndex    int
 	playersInOrder        []string
 	playerMessages        chan roomMessage // change this
-	aggregateGameMessages chan gl.OutMessage
+	aggregateGameMessages chan gl.GameMessage
 }
 
 type Player struct {
@@ -103,10 +103,10 @@ func NewRoom(maxPlayers int, client *Client) *Room {
 	player := client.PlayerID
 	pl := []string{}
 	pl = append(pl, player)
-	r := Room{maxPlayers: maxPlayers, players: make(map[string]*Player), currentPlayer: player, playerMessages: make(chan roomMessage, 10), playersInOrder: pl, currentPlayerIndex: 0, aggregateGameMessages: make(chan gl.OutMessage, 10)}
+	r := Room{maxPlayers: maxPlayers, players: make(map[string]*Player), currentPlayer: player, playerMessages: make(chan roomMessage, 10), playersInOrder: pl, currentPlayerIndex: 0, aggregateGameMessages: make(chan gl.GameMessage, 10)}
 	r.players[player] = &Player{playerID: player, game: gl.NewBattleship(player), client: client}
 	client.Room = &r
-	go func(c chan gl.OutMessage) {
+	go func(c chan gl.GameMessage) {
 		for msg := range c {
 			r.aggregateGameMessages <- msg
 		}
@@ -118,7 +118,7 @@ func (r *Room) joinPlayer(client *Client) {
 	player := client.PlayerID
 	r.playersInOrder = append(r.playersInOrder, player)
 	r.players[player] = &Player{playerID: player, game: gl.NewBattleshipFromExisting(r.players[r.currentPlayer].game, player), client: client}
-	go func(c chan gl.OutMessage) {
+	go func(c chan gl.GameMessage) {
 		for msg := range c {
 			r.aggregateGameMessages <- msg
 		}

@@ -9,7 +9,7 @@ import (
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
-type OutMessage struct {
+type GameMessage struct {
 	PlayerID string
 	Message  interface{}
 }
@@ -47,7 +47,7 @@ func (t *tile) hasShip() bool {
 
 type Battleship struct {
 	InMessages  chan []byte
-	OutMessages chan OutMessage
+	OutMessages chan GameMessage
 	playerID    string
 
 	board     [][]tile
@@ -57,7 +57,7 @@ type Battleship struct {
 }
 
 func (bs *Battleship) SendMessage(message interface{}) {
-	bs.OutMessages <- OutMessage{bs.playerID, message}
+	bs.OutMessages <- GameMessage{bs.playerID, message}
 }
 
 func (bs *Battleship) Run() {
@@ -101,7 +101,7 @@ func NewBattleship(playerID string) *Battleship {
 		dimension:   10,
 		victory:     false,
 		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan OutMessage, 10),
+		OutMessages: make(chan GameMessage, 10),
 		playerID:    playerID,
 	}
 	bs.newBoard()
@@ -119,7 +119,7 @@ func NewBattleshipFromExisting(bs *Battleship, playerID string) *Battleship {
 		dimension:   bs.dimension,
 		victory:     false,
 		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan OutMessage, 10),
+		OutMessages: make(chan GameMessage, 10),
 		playerID:    playerID,
 	}
 
