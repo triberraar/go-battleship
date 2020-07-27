@@ -17,7 +17,6 @@ export default class FeedbackText extends Phaser.GameObjects.GameObject {
   setCountDownText(m: string, i: number) {
     clearInterval(this.countDownTimer)
     this.countDownTimer = setInterval(() => {
-      console.log(i)
       i = i - 1
       if (i === 0) {
         clearInterval(this.countDownTimer)
