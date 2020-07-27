@@ -166,11 +166,11 @@ func (bs *Battleship) NewBattleshipFromExisting(playerID string) *Battleship {
 	return &nbs
 }
 
-func (bs Battleship) GetInMessages() chan []byte {
+func (bs *Battleship) GetInMessages() chan []byte {
 	return bs.InMessages
 }
 
-func (bs Battleship) GetOutMessages() chan messages.GameMessage {
+func (bs *Battleship) GetOutMessages() chan messages.GameMessage {
 	return bs.OutMessages
 }
 
