@@ -6,28 +6,13 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/triberraar/go-battleship/internal/game"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
 const (
 	turnDuration = 20
 )
-
-type BattleShipGameDefinition struct {
-	gameName string
-}
-
-func (bd BattleShipGameDefinition) GetTurnDuration() int {
-	return turnDuration
-}
-
-func (bd BattleShipGameDefinition) GetGameName() string {
-	return bd.gameName
-}
-
-func NewDefinition(gameName string) BattleShipGameDefinition {
-	return BattleShipGameDefinition{gameName}
-}
 
 type ship struct {
 	x        int
@@ -60,9 +45,25 @@ func (t *tile) hasShip() bool {
 	return t.ship != nil
 }
 
+type BattleshipDefinition struct {
+	gameName string
+}
+
+func (bs *BattleshipDefinition) TurnDuration() int {
+	return turnDuration
+}
+
+func (bs *BattleshipDefinition) GameName() string {
+	return bs.gameName
+}
+
+func NewGameDefinition(gameName string) game.GameDefinition {
+	return &BattleshipDefinition{gameName}
+}
+
 type Battleship struct {
-	InMessages  chan []byte
-	OutMessages chan messages.GameMessage
+	inMessages  chan []byte
+	outMessages chan messages.GameMessage
 	playerID    string
 
 	board     [][]tile
@@ -72,13 +73,13 @@ type Battleship struct {
 }
 
 func (bs *Battleship) SendMessage(message interface{}) {
-	bs.OutMessages <- messages.GameMessage{bs.playerID, message}
+	bs.outMessages <- messages.GameMessage{bs.playerID, message}
 }
 
 func (bs *Battleship) Run() {
 
 	for {
-		message := <-bs.InMessages
+		message := <-bs.inMessages
 		bm := messages.BaseMessage{}
 		json.Unmarshal(message, &bm)
 		if bm.Type == "FIRE" && !bs.victory {
@@ -112,12 +113,12 @@ func (bs *Battleship) Run() {
 	}
 }
 
-func NewBattleship(playerID string) *Battleship {
+func NewBattleship(playerID string) game.Game {
 	bs := Battleship{
 		dimension:   10,
 		victory:     false,
-		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan messages.GameMessage, 10),
+		inMessages:  make(chan []byte, 10),
+		outMessages: make(chan messages.GameMessage, 10),
 		playerID:    playerID,
 	}
 	bs.newBoard()
@@ -130,12 +131,12 @@ func NewBattleship(playerID string) *Battleship {
 	return &bs
 }
 
-func (bs *Battleship) NewBattleshipFromExisting(playerID string) *Battleship {
+func (bs *Battleship) NewBattleshipFromExisting(playerID string) game.Game {
 	nbs := Battleship{
 		dimension:   bs.dimension,
 		victory:     false,
-		InMessages:  make(chan []byte, 10),
-		OutMessages: make(chan messages.GameMessage, 10),
+		inMessages:  make(chan []byte, 10),
+		outMessages: make(chan messages.GameMessage, 10),
 		playerID:    playerID,
 	}
 
@@ -167,12 +168,12 @@ func (bs *Battleship) NewBattleshipFromExisting(playerID string) *Battleship {
 	return &nbs
 }
 
-func (bs *Battleship) GetInMessages() chan []byte {
-	return bs.InMessages
+func (bs *Battleship) InMessages() chan []byte {
+	return bs.inMessages
 }
 
-func (bs *Battleship) GetOutMessages() chan messages.GameMessage {
-	return bs.OutMessages
+func (bs *Battleship) OutMessages() chan messages.GameMessage {
+	return bs.outMessages
 }
 
 func (b *Battleship) newBoard() {

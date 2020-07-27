@@ -8,6 +8,7 @@ import (
 	"github.com/triberraar/go-battleship/internal/client"
 	cl "github.com/triberraar/go-battleship/internal/client"
 	"github.com/triberraar/go-battleship/internal/game"
+	"github.com/triberraar/go-battleship/internal/game/creator"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
@@ -29,7 +30,7 @@ type Room struct {
 }
 
 func NewRoom(maxPlayers int, gameName string) *Room {
-	gd, _ := game.NewGameDefinition(gameName)
+	gd, _ := creator.NewGameDefinition(gameName)
 	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10), gameDefinition: gd}
 }
 
@@ -37,18 +38,18 @@ func (r *Room) joinPlayer(client *cl.Client) {
 	playerID := client.PlayerID
 	r.playersInOrder = append(r.playersInOrder, playerID)
 	if len(r.players) == 0 {
-		game, _ := game.NewGame("battleship", playerID)
+		game, _ := creator.NewGame(r.gameDefinition.GameName(), playerID)
 		r.players[playerID] = &Player{playerID: playerID, game: game, client: client}
 	} else {
-		game, _ := game.NewGameFromExistion(r.players[r.currentPlayerID()].game, playerID)
+		game, _ := creator.NewGameFromExistion(r.gameDefinition.GameName(), r.players[r.currentPlayerID()].game, playerID)
 		r.players[playerID] = &Player{playerID: playerID, game: game, client: client}
 	}
 	r.aggregateMessages(playerID)
 	if r.isFull() {
 		for _, pl := range r.players {
-			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.playerID == r.currentPlayerID(), r.gameDefinition.GetTurnDuration())
+			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.playerID == r.currentPlayerID(), r.gameDefinition.TurnDuration())
 		}
-		r.waitForAction(r.gameDefinition.GetTurnDuration())
+		r.waitForAction(r.gameDefinition.TurnDuration())
 	} else {
 		r.players[playerID].client.OutMessages <- messages.NewAwaitingPlayersMessage()
 	}
@@ -59,7 +60,7 @@ func (r *Room) aggregateMessages(playerID string) {
 		for msg := range c {
 			r.aggregateGameMessages <- msg
 		}
-	}(r.players[playerID].game.GetOutMessages())
+	}(r.players[playerID].game.OutMessages())
 	go func(c chan cl.ClientMessage) {
 		for msg := range c {
 			r.aggregateClientMessages <- msg
@@ -89,8 +90,8 @@ func (r *Room) Run() {
 				log.Println("Other player sends message, skip")
 			} else {
 				r.waitTimer.Stop()
-				r.players[rm.PlayerID].game.GetInMessages() <- rm.Message
-				r.waitForAction(r.gameDefinition.GetTurnDuration())
+				r.players[rm.PlayerID].game.InMessages() <- rm.Message
+				r.waitForAction(r.gameDefinition.TurnDuration())
 			}
 		case m := <-r.aggregateGameMessages:
 			switch cm := m.Message.(type) {
