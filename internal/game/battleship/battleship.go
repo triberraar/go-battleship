@@ -2,6 +2,7 @@ package battleship
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"math/rand"
 	"time"
@@ -13,6 +14,26 @@ import (
 const (
 	turnDuration = 20
 )
+
+type BattleshipGameCreator struct {
+}
+
+func (bgc BattleshipGameCreator) Game(playerID string) game.Game {
+	return NewBattleship(playerID)
+}
+
+func (bgc BattleshipGameCreator) GameDefinition(gameName string) game.GameDefinition {
+	return NewGameDefinition(gameName)
+}
+
+func (bgc BattleshipGameCreator) FromExisting(playerID string, game game.Game) (game.Game, error) {
+	bs, ok := game.(*Battleship)
+	if ok {
+		return bs.NewBattleshipFromExisting(playerID), nil
+	}
+	return nil, errors.New("unknown game")
+
+}
 
 type ship struct {
 	x        int
