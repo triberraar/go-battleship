@@ -29,10 +29,12 @@ interface boardMessage {
 
 interface gameStartedMessage {
   turn: boolean
+  duration: number
 }
 
 interface turnMessage {
   turn: boolean
+  duration: number
 }
 
 export default class CommunicationManager {
@@ -163,7 +165,7 @@ export default class CommunicationManager {
 
   onGameStarted(m: gameStartedMessage) {
     if (m.turn) {
-      this.feedbackText.setText('Your turn')
+      this.feedbackText.setCountDownText('Your turn', m.duration)
     } else {
       this.feedbackText.setText('Waiting for the other dummy')
     }
@@ -171,7 +173,7 @@ export default class CommunicationManager {
 
   onTurn(m: turnMessage) {
     if (m.turn) {
-      this.feedbackText.setText('Your turn')
+      this.feedbackText.setCountDownText('Your turn', m.duration)
     } else {
       this.feedbackText.setText('Waiting for the other dummy')
     }

@@ -9,6 +9,26 @@ import (
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
+const (
+	turnDuration = 20
+)
+
+type BattleShipGameDefinition struct {
+	gameName string
+}
+
+func (bd BattleShipGameDefinition) GetTurnDuration() int {
+	return turnDuration
+}
+
+func (bd BattleShipGameDefinition) GetGameName() string {
+	return bd.gameName
+}
+
+func NewDefinition(gameName string) BattleShipGameDefinition {
+	return BattleShipGameDefinition{gameName}
+}
+
 type ship struct {
 	x        int
 	y        int
@@ -85,7 +105,7 @@ func (bs *Battleship) Run() {
 			} else {
 				bs.SendMessage(messages.NewMissMessage(fm.Coordinate))
 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
-				bs.SendMessage(messages.NewTurnMessage(false))
+				bs.SendMessage(messages.NewTurnMessage(false, turnDuration))
 			}
 		}
 	}

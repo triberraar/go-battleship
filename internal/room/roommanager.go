@@ -21,11 +21,11 @@ func (rm RoomManager) String() string {
 	return fmt.Sprintf("I be the room manager, here be my rooms %v", rm.rooms)
 }
 
-func (rm *RoomManager) JoinRoom(client *client.Client) {
+func (rm *RoomManager) JoinRoom(client *client.Client, gameName string) {
 	rm.joinMutex.Lock()
 	if len(rm.rooms) == 0 || rm.rooms[len(rm.rooms)-1].isFull() {
 		log.Println("Creating new room")
-		room := NewRoom(2)
+		room := NewRoom(2, gameName)
 		rm.rooms = append(rm.rooms, room)
 		go room.Run()
 	}

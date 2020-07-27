@@ -29,3 +29,16 @@ func NewGameFromExistion(game Game, playerID string) (Game, error) {
 		return nil, errors.New("unknown game")
 	}
 }
+
+type GameDefinition interface {
+	GetTurnDuration() int
+	GetGameName() string
+}
+
+func NewGameDefinition(gameName string) (GameDefinition, error) {
+	switch gameName {
+	case "battleships":
+		return battleship.NewDefinition(gameName), nil
+	}
+	return nil, errors.New("unknown game")
+}

@@ -88,24 +88,26 @@ func NewAwaitingPlayersMessage() awaitingPlayersMessage {
 
 type gameStartedMessage struct {
 	BaseMessage
-	Turn bool `json:"turn"`
+	TurnMessage
 }
 
-func NewGameStartedMessage(turn bool) gameStartedMessage {
+func NewGameStartedMessage(turn bool, duration int) gameStartedMessage {
 	return gameStartedMessage{
 		BaseMessage: BaseMessage{Type: "GAME_STARTED"},
-		Turn:        turn,
+		TurnMessage: TurnMessage{Turn: turn, Duration: duration},
 	}
 }
 
 type TurnMessage struct {
 	BaseMessage
-	Turn bool `json:"turn"`
+	Turn     bool `json:"turn"`
+	Duration int  `json:"duration"`
 }
 
-func NewTurnMessage(turn bool) TurnMessage {
+func NewTurnMessage(turn bool, duration int) TurnMessage {
 	return TurnMessage{
 		BaseMessage: BaseMessage{Type: "TURN"},
 		Turn:        turn,
+		Duration:    duration,
 	}
 }

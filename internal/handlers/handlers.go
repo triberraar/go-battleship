@@ -25,7 +25,7 @@ func Battleship(rm *room.RoomManager, w http.ResponseWriter, r *http.Request) {
 	}
 	client := &client.Client{Conn: c, PlayerID: uuid.New().String(), OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10)}
 
-	rm.JoinRoom(client)
+	rm.JoinRoom(client, "battleships")
 
 	go client.ReadPump()
 	go client.WritePump()
