@@ -93,10 +93,11 @@ func (bs *Battleship) Run() {
 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
 				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
 					coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
-					// bs.client.Send <- messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical)
 					bs.SendMessage(messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
+					bs.SendMessage(messages.NewTurnExtendedMessage(turnDuration))
 				} else {
 					bs.SendMessage(messages.NewHitMessage(fm.Coordinate))
+					bs.SendMessage(messages.NewTurnExtendedMessage(turnDuration))
 				}
 				if bs.hasVictory() {
 					bs.victory = true

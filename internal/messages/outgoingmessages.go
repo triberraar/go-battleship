@@ -111,3 +111,17 @@ func NewTurnMessage(turn bool, duration int) TurnMessage {
 		Duration:    duration,
 	}
 }
+
+type TurnExtendedMessage struct {
+	BaseMessage
+	Turn     bool `json:"turn"`
+	Duration int  `json:"duration"`
+}
+
+func NewTurnExtendedMessage(duration int) TurnExtendedMessage {
+	return TurnExtendedMessage{
+		BaseMessage: BaseMessage{Type: "TURN_EXTENDED"},
+		Turn:        true,
+		Duration:    duration,
+	}
+}

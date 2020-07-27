@@ -7,17 +7,14 @@ interface Coordinate {
 }
 
 interface HitMessage {
-  type: string
   coordinate: Coordinate
 }
 
 interface missMessage {
-  type: string
   coordinate: Coordinate
 }
 
 interface shipDestroyedMessage {
-  type: string
   coordinate: Coordinate
   shipSize: number
   vertical: boolean
@@ -34,6 +31,10 @@ interface gameStartedMessage {
 
 interface turnMessage {
   turn: boolean
+  duration: number
+}
+
+interface turnExtendedMessage {
   duration: number
 }
 
@@ -113,6 +114,10 @@ export default class CommunicationManager {
         this.onTurn(m)
         break
       }
+      case 'TURN_EXTENDED': {
+        this.onTurnExtended(m)
+        break
+      }
     }
   }
 
@@ -177,5 +182,9 @@ export default class CommunicationManager {
     } else {
       this.feedbackText.setText('Waiting for the other dummy')
     }
+  }
+
+  onTurnExtended(m: turnExtendedMessage) {
+    this.feedbackText.setCountDownText('Your turn', m.duration)
   }
 }
