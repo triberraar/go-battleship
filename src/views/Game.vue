@@ -5,9 +5,6 @@
 </template>
 
 <script>
-// @ is an alias to /src
-// import HelloWorld from "@/components/HelloWorld.vue";
-
 export default {
   name: 'Game',
   data() {
@@ -15,18 +12,17 @@ export default {
       downloaded: false,
       gameInstance: null,
       containerId: 'game-container'
-    };
+    }
   },
   async mounted() {
-    const game = await import(/* webpackChunkName: "game" */ '@/game/game');
-    this.downloaded = true;
+    const game = await import(/* webpackChunkName: "game" */ '@/game/game')
+    this.downloaded = true
     this.$nextTick(() => {
-      this.gameInstance = game.launch(this.containerId);
-    });
+      this.gameInstance = game.launch(this.containerId)
+    })
   },
   destroyed() {
-    console.log('destroyed');
-    this.gameInstance.destroy(true);
+    this.gameInstance.destroy(true)
   }
-};
+}
 </script>

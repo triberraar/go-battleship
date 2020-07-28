@@ -1,5 +1,4 @@
-import CommunicationManager from '../communication'
-import SeaScene from './seaScene'
+import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin'
 
 export default class MenuScene extends Phaser.Scene {
   private playButton: any
@@ -7,8 +6,6 @@ export default class MenuScene extends Phaser.Scene {
   constructor() {
     super('menuScene')
   }
-
-  init() {}
 
   create() {
     this.playButton = this.createButton('Play')
@@ -50,5 +47,9 @@ export default class MenuScene extends Phaser.Scene {
       },
       align: 'center'
     })
+  }
+
+  clear() {
+    this.plugins.removeScenePlugin('rexUI')
   }
 }

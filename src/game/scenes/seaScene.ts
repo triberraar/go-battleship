@@ -116,4 +116,10 @@ export default class SeaScene extends Phaser.Scene {
     this.communicationManager.setFeedbackText(new FeedbackText(this))
     this.communicationManager.play()
   }
+
+  clear() {
+    if (this.communicationManager) {
+      this.communicationManager.close()
+    }
+  }
 }

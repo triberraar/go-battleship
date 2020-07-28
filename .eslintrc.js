@@ -15,5 +15,6 @@ module.exports = {
     'max-classes-per-file': 0,
     'no-plusplus': 0,
     'import/order': 0,
+    '@typescript-eslint/ban-ts-ignore': 0,
   },
 }
