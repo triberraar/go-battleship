@@ -9,10 +9,11 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   init() {}
+
   create() {
     this.playButton = this.createButton('Play')
     // @ts-ignore
-    var buttons = this.rexUI.add
+    const buttons = this.rexUI.add
       .buttons({
         x: 400,
         y: 300,

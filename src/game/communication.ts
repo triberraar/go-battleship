@@ -2,55 +2,58 @@ import BoardManager from './board'
 import FeedbackText from './feedbackText'
 
 interface Coordinate {
-  x: number
-  y: number
+  x: number;
+  y: number;
 }
 
 interface HitMessage {
-  coordinate: Coordinate
+  coordinate: Coordinate;
 }
 
 interface missMessage {
-  coordinate: Coordinate
+  coordinate: Coordinate;
 }
 
 interface shipDestroyedMessage {
-  coordinate: Coordinate
-  shipSize: number
-  vertical: boolean
+  coordinate: Coordinate;
+  shipSize: number;
+  vertical: boolean;
 }
 
 interface boardMessage {
-  shipSizes: number[]
+  shipSizes: number[];
 }
 
 interface gameStartedMessage {
-  turn: boolean
-  duration: number
+  turn: boolean;
+  duration: number;
 }
 
 interface turnMessage {
-  turn: boolean
-  duration: number
+  turn: boolean;
+  duration: number;
 }
 
 interface turnExtendedMessage {
-  duration: number
+  duration: number;
 }
 
 export default class CommunicationManager {
   private boardManager: BoardManager
+
   private feedbackText: FeedbackText
+
   private ws: WebSocket
+
   constructor() {
     const loc = window.location
-    var wsUri = ''
+    let wsUri = ''
     if (loc.protocol === 'https:') {
       wsUri = 'wss:'
     } else {
       wsUri = 'ws:'
     }
-    wsUri += '//' + loc.host + '/battleship'
+    wsUri += `//${loc.host}/battleship`
     if (loc.host.startsWith('localhost')) {
       wsUri = 'ws://localhost:10002/battleship'
     }
@@ -152,6 +155,7 @@ export default class CommunicationManager {
   onShipDestroyed(m: shipDestroyedMessage) {
     this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
   }
+
   onVictory() {
     this.boardManager.victory()
     this.feedbackText.setText('You win')
