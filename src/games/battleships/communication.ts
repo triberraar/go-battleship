@@ -2,40 +2,40 @@ import BoardManager from './board' // eslint-disable-line
 import FeedbackText from './feedbackText'
 
 interface Coordinate {
-  x: number;
-  y: number;
+  x: number
+  y: number
 }
 
 interface HitMessage {
-  coordinate: Coordinate;
+  coordinate: Coordinate
 }
 
 interface MissMessage {
-  coordinate: Coordinate;
+  coordinate: Coordinate
 }
 
 interface ShipDestroyedMessage {
-  coordinate: Coordinate;
-  shipSize: number;
-  vertical: boolean;
+  coordinate: Coordinate
+  shipSize: number
+  vertical: boolean
 }
 
 interface BoardMessage {
-  shipSizes: number[];
+  shipSizes: number[]
 }
 
 interface GameStartedMessage {
-  turn: boolean;
-  duration: number;
+  turn: boolean
+  duration: number
 }
 
 interface TurnMessage {
-  turn: boolean;
-  duration: number;
+  turn: boolean
+  duration: number
 }
 
 interface TurnExtendedMessage {
-  duration: number;
+  duration: number
 }
 
 export default class CommunicationManager {
@@ -116,7 +116,7 @@ export default class CommunicationManager {
         break
       }
       default: {
-        console.error('unknowns message')
+        console.error(`unknowns message ${m.type}`)
         break
       }
     }

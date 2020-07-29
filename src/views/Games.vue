@@ -27,7 +27,7 @@ import { getModule } from 'vuex-module-decorators'
 import User from '@/store/modules/user'
 
 @Component({})
-export default class Battleships extends Vue {
+export default class Games extends Vue {
   userModule = getModule(User, this.$store)
 
   playBattleships(): void {
