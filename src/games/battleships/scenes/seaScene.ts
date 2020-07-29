@@ -18,6 +18,8 @@ import ship2 from '@/assets/2_ship.png'
 import ship3 from '@/assets/3_ship.png'
 import ship4 from '@/assets/4_ship.png'
 import smokeParticle from '@/assets/smoke.png'
+import flaresParticles from '@/assets/flares'
+import flares from '@/assets/flares.png'
 
 export default class SeaScene extends Phaser.Scene {
   private boardManager: BoardManager
@@ -64,7 +66,7 @@ export default class SeaScene extends Phaser.Scene {
       frameWidth: 69,
       frameHeight: 180
     })
-    // this.load.atlas('fireworks', 'assets/flares.png', 'assets/flares.json')
+    this.load.atlas('fireworks', flares, flaresParticles)
     this.load.image('ship1', ship1)
     this.load.image('ship2', ship2)
     this.load.image('ship3', ship3)
