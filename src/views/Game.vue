@@ -15,10 +15,10 @@ export default {
     }
   },
   async mounted() {
-    const game = await import(/* webpackChunkName: "game" */ '@/game/game')
+    const game = await import(/* webpackChunkName: "game" */ '@/games/battleships/battleships')
     this.downloaded = true
     this.$nextTick(() => {
-      this.gameInstance = game.launch(this.containerId)
+      this.gameInstance = game.launchBattleships(this.containerId)
     })
   },
   destroyed() {

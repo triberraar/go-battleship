@@ -4,7 +4,7 @@ import RexUIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin'
 import SeaScene from './scenes/seaScene'
 import MenuScene from './scenes/menuScene'
 
-function launch(containerId: string): Phaser.Game {
+function launchBattleships(containerId: string): Phaser.Game {
   const g = new Phaser.Game({
     type: Phaser.AUTO,
     scale: {
@@ -38,5 +38,5 @@ function launch(containerId: string): Phaser.Game {
   return g
 }
 
-export default launch
-export { launch }
+export default launchBattleships
+export { launchBattleships }
