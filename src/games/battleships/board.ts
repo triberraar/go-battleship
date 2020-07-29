@@ -25,6 +25,7 @@ class SeaTile extends Phaser.GameObjects.GameObject {
     this.communicationManager.fire(this.x, this.y)
   }
 
+  /* eslint-disable no-new */
   destoryShip(size: number, vertical: boolean) {
     switch (size) {
       case 1: {
@@ -43,8 +44,13 @@ class SeaTile extends Phaser.GameObjects.GameObject {
         new Ship4(this.scene, this.x, this.y, vertical)
         break
       }
+      default: {
+        console.error('unknown ship size')
+        break
+      }
     }
   }
+  /* eslint-enable no-new */
 
   miss() {
     const missSprite = this.scene.add.sprite(this.x * 48, this.y * 48, 'miss').setOrigin(0, 0)
@@ -172,7 +178,9 @@ export default class BoardManager {
 
   ships(shipSizes: number[]) {
     shipSizes.sort()
-    const os = shipSizes.map((s, i) => new OpponentShip(this.scene, 'opponentship', 500, 50 + i * 50, s))
+    const os = shipSizes.map(
+      (s, i) => new OpponentShip(this.scene, 'opponentship', 500, 50 + i * 50, s)
+    )
     this.opponentShips = os
   }
 

@@ -1,5 +1,5 @@
 export default class MenuScene extends Phaser.Scene {
-  private playButton: any
+  private playButton: any // eslint-disable-line
 
   constructor() {
     super('menuScene')
@@ -23,6 +23,7 @@ export default class MenuScene extends Phaser.Scene {
     buttons.on('button.click', this.buttonClicked, this)
   }
 
+  // eslint-disable-next-line
   buttonClicked(button: any) {
     if (button === this.playButton) {
       this.scene.start('seaScene')

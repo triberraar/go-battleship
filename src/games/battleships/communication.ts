@@ -10,31 +10,31 @@ interface HitMessage {
   coordinate: Coordinate;
 }
 
-interface missMessage {
+interface MissMessage {
   coordinate: Coordinate;
 }
 
-interface shipDestroyedMessage {
+interface ShipDestroyedMessage {
   coordinate: Coordinate;
   shipSize: number;
   vertical: boolean;
 }
 
-interface boardMessage {
+interface BoardMessage {
   shipSizes: number[];
 }
 
-interface gameStartedMessage {
+interface GameStartedMessage {
   turn: boolean;
   duration: number;
 }
 
-interface turnMessage {
+interface TurnMessage {
   turn: boolean;
   duration: number;
 }
 
-interface turnExtendedMessage {
+interface TurnExtendedMessage {
   duration: number;
 }
 
@@ -59,13 +59,9 @@ export default class CommunicationManager {
     }
 
     this.ws = new WebSocket(wsUri)
-    this.ws.onopen = this.onopen
     this.ws.onmessage = this.onmessage
     this.ws.onerror = this.onerror
-    this.waitForConnection()
   }
-
-  waitForConnection() {}
 
   close() {
     this.ws.close(1000)
@@ -79,8 +75,6 @@ export default class CommunicationManager {
       this.ws.send(message)
     }
   }
-
-  onopen = () => {}
 
   onmessage = (ev: MessageEvent) => {
     const m = JSON.parse(ev.data)
@@ -121,6 +115,10 @@ export default class CommunicationManager {
         this.onTurnExtended(m)
         break
       }
+      default: {
+        console.error('unknowns message')
+        break
+      }
     }
   }
 
@@ -148,11 +146,11 @@ export default class CommunicationManager {
     this.boardManager.hit(m.coordinate.x, m.coordinate.y)
   }
 
-  onMiss(m: missMessage) {
+  onMiss(m: MissMessage) {
     this.boardManager.miss(m.coordinate.x, m.coordinate.y)
   }
 
-  onShipDestroyed(m: shipDestroyedMessage) {
+  onShipDestroyed(m: ShipDestroyedMessage) {
     this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
   }
 
@@ -167,12 +165,12 @@ export default class CommunicationManager {
     this.feedbackText.setText('The other dummy won, loser')
   }
 
-  onBoard(m: boardMessage) {
+  onBoard(m: BoardMessage) {
     console.log(this.boardManager)
     this.boardManager.ships(m.shipSizes)
   }
 
-  onGameStarted(m: gameStartedMessage) {
+  onGameStarted(m: GameStartedMessage) {
     if (m.turn) {
       this.feedbackText.setCountDownText('Your turn', m.duration)
     } else {
@@ -180,7 +178,7 @@ export default class CommunicationManager {
     }
   }
 
-  onTurn(m: turnMessage) {
+  onTurn(m: TurnMessage) {
     if (m.turn) {
       this.feedbackText.setCountDownText('Your turn', m.duration)
     } else {
@@ -188,7 +186,7 @@ export default class CommunicationManager {
     }
   }
 
-  onTurnExtended(m: turnExtendedMessage) {
+  onTurnExtended(m: TurnExtendedMessage) {
     this.feedbackText.setCountDownText('Your turn', m.duration)
   }
 }
