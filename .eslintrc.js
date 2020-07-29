@@ -17,5 +17,6 @@ module.exports = {
     'import/order': 0,
     '@typescript-eslint/ban-ts-ignore': 0,
     'arrow-parens': 0,
+    'class-methods-use-this': 0,
   },
 }
