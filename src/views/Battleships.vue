@@ -1,22 +1,21 @@
 <template>
-  <div class="game">
-    <h1>This is an game page</h1>
-  </div>
+  <div :id="containerId"></div>
 </template>
 
 <script>
 export default {
-  name: 'Game',
+  name: 'Games',
   data() {
     return {
       downloaded: false,
       gameInstance: null,
-      containerId: 'game-container'
+      containerId: 'battleshipsContainer'
     }
   },
   async mounted() {
-    const game = await import(/* webpackChunkName: "game" */ '@/games/battleships/battleships')
-    this.downloaded = true
+    const game = await import(
+      /* webpackChunkName: "game" */ '@/games/battleships/battleships'
+    )
     this.$nextTick(() => {
       this.gameInstance = game.launchBattleships(this.containerId)
     })

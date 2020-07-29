@@ -28,7 +28,6 @@ export default class Navigation extends Vue {
   username = ''
 
   login(): void {
-    console.log(`the username ${this.username}`)
     this.userModule.logIn(this.username)
     this.$buefy.toast.open({
       message: `Welcome ${this.username}`,

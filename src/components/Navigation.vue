@@ -11,7 +11,7 @@
     <template slot="start">
       <b-navbar-item class="is-dark" tag="router-link" :to="{ name: 'Home' }">Home</b-navbar-item>
       <b-navbar-item tag="router-link" :to="{ name: 'Accounting' }">Accounting</b-navbar-item>
-      <b-navbar-item tag="router-link" :to="{ name: 'Game' }">Games</b-navbar-item>
+      <b-navbar-item tag="router-link" :to="{ name: 'Games' }">Games</b-navbar-item>
     </template>
 
     <template slot="end">
