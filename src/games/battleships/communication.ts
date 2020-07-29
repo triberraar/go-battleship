@@ -1,5 +1,6 @@
 import BoardManager from './board' // eslint-disable-line
 import FeedbackText from './feedbackText'
+import UserStore from '@/store/modules/user'
 
 interface Coordinate {
   x: number
@@ -139,7 +140,7 @@ export default class CommunicationManager {
   }
 
   play() {
-    this.send(JSON.stringify({ type: 'PLAY' }))
+    this.send(JSON.stringify({ type: 'PLAY', username: UserStore.state.username }))
   }
 
   onHit(m: HitMessage) {

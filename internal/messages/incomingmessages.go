@@ -8,4 +8,5 @@ type FireMessage struct {
 
 type PlayMessage struct {
 	BaseMessage
+	Username string `json:"username"`
 }
