@@ -1,5 +1,5 @@
 {
-  "name": "phaser3-typescript-project-template",
+  "name": "Games",
   "version": "1.0.2",
   "description": "A Phaser 3 Project Template using Rollup and TypeScript",
   "main": "src/game.ts",

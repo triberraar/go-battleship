@@ -13,7 +13,7 @@ const routes: Array<RouteConfig> = [
     component: Home
   },
   {
-    path: '/',
+    path: '/login',
     name: 'Login',
     component: Login
   },

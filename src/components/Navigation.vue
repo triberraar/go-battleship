@@ -17,7 +17,7 @@
     <template slot="end">
       <b-navbar-item tag="router-link" :to="{ name: 'Login' }" v-if="!userModule.loggedIn">
         <div class="buttons">
-          <a class="button is-light" @click="logIn">Log in</a>
+          <a class="button is-light">Log in</a>
         </div>
       </b-navbar-item>
       <b-navbar-item v-else>
@@ -32,19 +32,15 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import { getModule } from 'vuex-module-decorators'
-import { mapState } from 'vuex'
 import User from '@/store/modules/user'
 
 @Component({})
 export default class Navigation extends Vue {
   userModule = getModule(User, this.$store)
 
-  logIn(): void {
-    this.userModule.logIn()
-  }
-
   logOut(): void {
     this.userModule.logOut()
+    this.$router.push({ name: 'Home' })
   }
 }
 </script>
