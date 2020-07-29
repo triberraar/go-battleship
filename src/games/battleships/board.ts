@@ -1,5 +1,5 @@
 import 'phaser'
-import CommunicationManager from './communication'
+import CommunicationManager from './communication' // eslint-disable-line
 import {
   Ship2, Ship1, Ship3, Ship4, OpponentShip
 } from './ship'

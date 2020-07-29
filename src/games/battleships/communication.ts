@@ -1,4 +1,4 @@
-import BoardManager from './board'
+import BoardManager from './board' // eslint-disable-line
 import FeedbackText from './feedbackText'
 
 interface Coordinate {
