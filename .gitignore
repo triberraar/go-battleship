@@ -4,3 +4,4 @@ node_modules
 static
 game.js
 game.js.map
+dist

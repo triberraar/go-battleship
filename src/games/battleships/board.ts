@@ -1,6 +1,8 @@
 import 'phaser'
-import CommunicationManager from './communication'
-import { Ship2, Ship1, Ship3, Ship4, OpponentShip } from './ship'
+import CommunicationManager from './communication' // eslint-disable-line
+import {
+  Ship2, Ship1, Ship3, Ship4, OpponentShip
+} from './ship'
 
 class SeaTile extends Phaser.GameObjects.GameObject {
   private hitSprite: Phaser.GameObjects.Sprite
@@ -23,6 +25,7 @@ class SeaTile extends Phaser.GameObjects.GameObject {
     this.communicationManager.fire(this.x, this.y)
   }
 
+  /* eslint-disable no-new */
   destoryShip(size: number, vertical: boolean) {
     switch (size) {
       case 1: {
@@ -41,8 +44,13 @@ class SeaTile extends Phaser.GameObjects.GameObject {
         new Ship4(this.scene, this.x, this.y, vertical)
         break
       }
+      default: {
+        console.error('unknown ship size')
+        break
+      }
     }
   }
+  /* eslint-enable no-new */
 
   miss() {
     const missSprite = this.scene.add.sprite(this.x * 48, this.y * 48, 'miss').setOrigin(0, 0)
@@ -63,8 +71,11 @@ class SeaTile extends Phaser.GameObjects.GameObject {
 
 export default class BoardManager {
   private board: SeaTile[][] = []
+
   private opponentShips: OpponentShip[] = []
+
   private fireworksEmitter1: Phaser.GameObjects.Particles.ParticleEmitter
+
   private fireworksEmitter2: Phaser.GameObjects.Particles.ParticleEmitter
 
   constructor(
@@ -73,9 +84,9 @@ export default class BoardManager {
     private y: number,
     private communicationManager: CommunicationManager
   ) {
-    for (var i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i++) {
       this.board[i] = []
-      for (var j = 0; j < 10; j++) {
+      for (let j = 0; j < 10; j++) {
         this.board[i][j] = new SeaTile(this.scene, i, j, this.communicationManager)
       }
     }
@@ -90,7 +101,7 @@ export default class BoardManager {
   }
 
   destoryShip(x: number, y: number, size: number, vertical: boolean) {
-    for (var i = 0; i < size; i++) {
+    for (let i = 0; i < size; i++) {
       if (vertical) {
         this.board[x][y + i].hideHit()
       } else {
@@ -130,23 +141,21 @@ export default class BoardManager {
       blendMode: 'ADD',
       on: false
     })
-    for (var i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       setTimeout(
-        () =>
-          this.fireworksEmitter1.explode(
-            150,
-            Math.floor(Math.random() * (750 - 50)) + 50,
-            Math.floor(Math.random() * (550 - 50)) + 50
-          ),
+        () => this.fireworksEmitter1.explode(
+          150,
+          Math.floor(Math.random() * (750 - 50)) + 50,
+          Math.floor(Math.random() * (550 - 50)) + 50
+        ),
         Math.random() * (5000 - 1000) + 1000
       )
       setTimeout(
-        () =>
-          this.fireworksEmitter2.explode(
-            150,
-            Math.floor(Math.random() * (750 - 50)) + 50,
-            Math.floor(Math.random() * (550 - 50)) + 50
-          ),
+        () => this.fireworksEmitter2.explode(
+          150,
+          Math.floor(Math.random() * (750 - 50)) + 50,
+          Math.floor(Math.random() * (550 - 50)) + 50
+        ),
         Math.random() * (5000 - 1000) + 1000
       )
     }
@@ -169,11 +178,12 @@ export default class BoardManager {
 
   ships(shipSizes: number[]) {
     shipSizes.sort()
-    const os = shipSizes.map((s, i) => {
-      return new OpponentShip(this.scene, 'opponentship', 500, 50 + i * 50, s)
-    })
+    const os = shipSizes.map(
+      (s, i) => new OpponentShip(this.scene, 'opponentship', 500, 50 + i * 50, s)
+    )
     this.opponentShips = os
   }
+
   backToMenu() {
     this.scene.scene.stop('seaScene')
     this.scene.scene.start('menuScene')

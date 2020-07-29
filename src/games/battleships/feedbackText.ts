@@ -2,7 +2,8 @@ import 'phaser'
 
 export default class FeedbackText extends Phaser.GameObjects.GameObject {
   private text: Phaser.GameObjects.Text
-  private countDownTimer: NodeJS.Timer
+
+  private countDownTimer: number
 
   constructor(scene: Phaser.Scene) {
     super(scene, 'feedbackText')
@@ -15,13 +16,14 @@ export default class FeedbackText extends Phaser.GameObjects.GameObject {
   }
 
   setCountDownText(m: string, i: number) {
+    let counter = i
     clearInterval(this.countDownTimer)
     this.countDownTimer = setInterval(() => {
-      i = i - 1
-      if (i === 0) {
+      counter -= 1
+      if (counter === 0) {
         clearInterval(this.countDownTimer)
       } else {
-        this.text.setText(`${m} (${i} secs)`)
+        this.text.setText(`${m} (${counter} secs)`)
       }
     }, 1000)
   }

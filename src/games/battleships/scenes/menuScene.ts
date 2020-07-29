@@ -1,18 +1,14 @@
-import CommunicationManager from '../communication'
-import SeaScene from './seaScene'
-
 export default class MenuScene extends Phaser.Scene {
-  private playButton: any
+  private playButton: any // eslint-disable-line
 
   constructor() {
     super('menuScene')
   }
 
-  init() {}
   create() {
     this.playButton = this.createButton('Play')
     // @ts-ignore
-    var buttons = this.rexUI.add
+    const buttons = this.rexUI.add
       .buttons({
         x: 400,
         y: 300,
@@ -27,6 +23,7 @@ export default class MenuScene extends Phaser.Scene {
     buttons.on('button.click', this.buttonClicked, this)
   }
 
+  // eslint-disable-next-line
   buttonClicked(button: any) {
     if (button === this.playButton) {
       this.scene.start('seaScene')
@@ -49,5 +46,9 @@ export default class MenuScene extends Phaser.Scene {
       },
       align: 'center'
     })
+  }
+
+  clear() {
+    this.plugins.removeScenePlugin('rexUI')
   }
 }

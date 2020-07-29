@@ -1,6 +1,7 @@
 package room
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -16,6 +17,7 @@ type Player struct {
 	playerID string
 	game     game.Game
 	client   *client.Client
+	username string
 }
 
 type Room struct {
@@ -84,7 +86,13 @@ func (r *Room) Run() {
 	for {
 		select {
 		case rm := <-r.aggregateClientMessages:
-			if !r.isFull() {
+			bm := messages.BaseMessage{}
+			json.Unmarshal(rm.Message, &bm)
+			if bm.Type == "PLAY" {
+				pm := messages.PlayMessage{}
+				json.Unmarshal(rm.Message, &pm)
+				r.players[rm.PlayerID].username = pm.Username
+			} else if !r.isFull() {
 				log.Println("room not full, skipping")
 			} else if rm.PlayerID != r.currentPlayerID() {
 				log.Println("Other player sends message, skip")

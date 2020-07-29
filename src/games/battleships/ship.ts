@@ -13,13 +13,19 @@ class Ship extends Phaser.GameObjects.GameObject {
 
     if (vertical) {
       // const ship = scene.add.image(24 + x * 48, this.size * 24 + y * 48, this.type)
-      const sp = this.scene.add.sprite(24 + x * 48, this.size * 24 + y * 48, `${this.type}Destroyed`)
+      const sp = this.scene.add.sprite(
+        24 + x * 48,
+        this.size * 24 + y * 48,
+        `${this.type}Destroyed`
+      )
       sp.anims.load(`${this.type}Destroyed`)
       sp.anims.play(`${this.type}Destroyed`)
       sp.on('animationcomplete', this.destructionDone, this)
     } else {
       // const ship = scene.add.image(this.size * 24 + x * 48, 24 + y * 48, this.type).setAngle(90)
-      const sp = this.scene.add.sprite(this.size * 24 + x * 48, 24 + y * 48, `${this.type}Destroyed`).setAngle(90)
+      const sp = this.scene.add
+        .sprite(this.size * 24 + x * 48, 24 + y * 48, `${this.type}Destroyed`)
+        .setAngle(90)
       sp.anims.load(`${this.type}Destroyed`)
       sp.anims.play(`${this.type}Destroyed`)
       sp.on('animationcomplete', this.destructionDone, this)
@@ -35,7 +41,7 @@ class Ship extends Phaser.GameObjects.GameObject {
       frequency: 1,
       quantity: 1
     } as Phaser.Types.GameObjects.Particles.ParticleEmitterConfig
-    for (var i = 0; i < this.size; i++) {
+    for (let i = 0; i < this.size; i++) {
       if (this.vertical) {
         emiterConfig.x = this.x * 48 + 24
         emiterConfig.y = (this.y + i) * 48 + 24
@@ -83,12 +89,22 @@ export class Ship4 extends Ship {
 
 export class OpponentShip extends Phaser.GameObjects.GameObject {
   private destroyed: boolean
+
   private sprite: Phaser.GameObjects.Sprite
 
-  constructor(scene: Phaser.Scene, type: string, private x: number, private y: number, private size: number) {
+  constructor(
+    scene: Phaser.Scene,
+    type: string,
+    private x: number,
+    private y: number,
+    private size: number
+  ) {
     super(scene, type)
     this.destroyed = false
 
-    this.sprite = this.scene.add.sprite(x, y, `ship${size}`).setAngle(-90).setOrigin(0, 0)
+    this.sprite = this.scene.add
+      .sprite(x, y, `ship${size}`)
+      .setAngle(-90)
+      .setOrigin(0, 0)
   }
 }

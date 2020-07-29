@@ -1,7 +1,7 @@
 # battle ship game
 
 Proof of concept battleship game.
-Ui written with phaser 3 and typescript.
+Ui written with phaser 3/Vue and typescript.
 Backend written in golang with gorilla
 
 ## demo
@@ -20,9 +20,9 @@ Run the whole thing by executing `./bin/go-battleship`
 
 To develop you need to run two servers. One runs and watches the frontend code, the other one runs the go server
 
-Run the ui by running `npm run watch` in the root folder. This will run a server on port 100001.
+Run the ui by running `npm run serve` in the root folder. This will run a server on port 8080.
 Run the backend by running `go run ./cmd/go-battleship/` in the root folder. This will run a server on port 100002.
-You can use either the 100001 or 10002 url as they both serve the same files, the watch command ll recompile.
+Navigate to localhost:8080 and enjoy
 
 ## How to deploy
 

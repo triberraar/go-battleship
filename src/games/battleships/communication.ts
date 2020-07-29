@@ -1,5 +1,6 @@
-import BoardManager from './board'
+import BoardManager from './board' // eslint-disable-line
 import FeedbackText from './feedbackText'
+import UserStore from '@/store/modules/user'
 
 interface Coordinate {
   x: number
@@ -10,59 +11,58 @@ interface HitMessage {
   coordinate: Coordinate
 }
 
-interface missMessage {
+interface MissMessage {
   coordinate: Coordinate
 }
 
-interface shipDestroyedMessage {
+interface ShipDestroyedMessage {
   coordinate: Coordinate
   shipSize: number
   vertical: boolean
 }
 
-interface boardMessage {
+interface BoardMessage {
   shipSizes: number[]
 }
 
-interface gameStartedMessage {
+interface GameStartedMessage {
   turn: boolean
   duration: number
 }
 
-interface turnMessage {
+interface TurnMessage {
   turn: boolean
   duration: number
 }
 
-interface turnExtendedMessage {
+interface TurnExtendedMessage {
   duration: number
 }
 
 export default class CommunicationManager {
   private boardManager: BoardManager
+
   private feedbackText: FeedbackText
+
   private ws: WebSocket
+
   constructor() {
     const loc = window.location
-    var wsUri = ''
+    let wsUri = ''
     if (loc.protocol === 'https:') {
       wsUri = 'wss:'
     } else {
       wsUri = 'ws:'
     }
-    wsUri += '//' + loc.host + '/battleship'
+    wsUri += `//${loc.host}/battleship`
     if (loc.host.startsWith('localhost')) {
       wsUri = 'ws://localhost:10002/battleship'
     }
 
     this.ws = new WebSocket(wsUri)
-    this.ws.onopen = this.onopen
     this.ws.onmessage = this.onmessage
     this.ws.onerror = this.onerror
-    this.waitForConnection()
   }
-
-  waitForConnection() {}
 
   close() {
     this.ws.close(1000)
@@ -76,8 +76,6 @@ export default class CommunicationManager {
       this.ws.send(message)
     }
   }
-
-  onopen = () => {}
 
   onmessage = (ev: MessageEvent) => {
     const m = JSON.parse(ev.data)
@@ -118,6 +116,10 @@ export default class CommunicationManager {
         this.onTurnExtended(m)
         break
       }
+      default: {
+        console.error(`unknowns message ${m.type}`)
+        break
+      }
     }
   }
 
@@ -138,20 +140,21 @@ export default class CommunicationManager {
   }
 
   play() {
-    this.send(JSON.stringify({ type: 'PLAY' }))
+    this.send(JSON.stringify({ type: 'PLAY', username: UserStore.state.username }))
   }
 
   onHit(m: HitMessage) {
     this.boardManager.hit(m.coordinate.x, m.coordinate.y)
   }
 
-  onMiss(m: missMessage) {
+  onMiss(m: MissMessage) {
     this.boardManager.miss(m.coordinate.x, m.coordinate.y)
   }
 
-  onShipDestroyed(m: shipDestroyedMessage) {
+  onShipDestroyed(m: ShipDestroyedMessage) {
     this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
   }
+
   onVictory() {
     this.boardManager.victory()
     this.feedbackText.setText('You win')
@@ -163,12 +166,12 @@ export default class CommunicationManager {
     this.feedbackText.setText('The other dummy won, loser')
   }
 
-  onBoard(m: boardMessage) {
+  onBoard(m: BoardMessage) {
     console.log(this.boardManager)
     this.boardManager.ships(m.shipSizes)
   }
 
-  onGameStarted(m: gameStartedMessage) {
+  onGameStarted(m: GameStartedMessage) {
     if (m.turn) {
       this.feedbackText.setCountDownText('Your turn', m.duration)
     } else {
@@ -176,7 +179,7 @@ export default class CommunicationManager {
     }
   }
 
-  onTurn(m: turnMessage) {
+  onTurn(m: TurnMessage) {
     if (m.turn) {
       this.feedbackText.setCountDownText('Your turn', m.duration)
     } else {
@@ -184,7 +187,7 @@ export default class CommunicationManager {
     }
   }
 
-  onTurnExtended(m: turnExtendedMessage) {
+  onTurnExtended(m: TurnExtendedMessage) {
     this.feedbackText.setCountDownText('Your turn', m.duration)
   }
 }
