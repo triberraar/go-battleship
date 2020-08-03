@@ -14,72 +14,79 @@ import (
 )
 
 type Player struct {
-	playerID string
-	game     game.Game
-	client   *client.Client
-	username string
+	connectionID string
+	game         game.Game
+	client       *client.Client
+	username     string
 }
 
 type Room struct {
 	maxPlayers              int
 	players                 map[string]*Player
-	currentPlayerIndex      int
-	playersInOrder          []string
+	currentConnectionIndex  int
+	connectionsInOrder      []string
 	aggregateGameMessages   chan messages.GameMessage
 	aggregateClientMessages chan client.ClientMessage
+	aggregateLeavers        chan string
 	waitTimer               *time.Timer
 	gameDefinition          game.GameDefinition
+	leavers                 map[string]string
 }
 
 func NewRoom(maxPlayers int, gameName string) *Room {
 	gd, _ := creator.NewGameDefinition(gameName)
-	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10), gameDefinition: gd}
+	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), connectionsInOrder: []string{}, currentConnectionIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10), gameDefinition: gd, aggregateLeavers: make(chan string, 2), leavers: make(map[string]string)}
 }
 
 func (r *Room) joinPlayer(client *cl.Client) {
-	playerID := client.PlayerID
-	r.playersInOrder = append(r.playersInOrder, playerID)
+	connectionID := client.ConnectionID
+	r.connectionsInOrder = append(r.connectionsInOrder, connectionID)
 	if len(r.players) == 0 {
-		game, _ := creator.NewGame(r.gameDefinition.GameName(), playerID)
-		r.players[playerID] = &Player{playerID: playerID, game: game, client: client}
+		game, _ := creator.NewGame(r.gameDefinition.GameName(), connectionID)
+		r.players[connectionID] = &Player{connectionID: connectionID, game: game, client: client}
 	} else {
-		game, _ := creator.NewGameFromExistion(r.gameDefinition.GameName(), r.players[r.currentPlayerID()].game, playerID)
-		r.players[playerID] = &Player{playerID: playerID, game: game, client: client}
+		game, _ := creator.NewGameFromExistion(r.gameDefinition.GameName(), r.players[r.currentConnectionID()].game, connectionID)
+		r.players[connectionID] = &Player{connectionID: connectionID, game: game, client: client}
 	}
-	r.aggregateMessages(playerID)
+	r.aggregateMessages(connectionID)
 	if r.isFull() {
 		for _, pl := range r.players {
-			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.playerID == r.currentPlayerID(), r.gameDefinition.TurnDuration())
+			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.connectionID == r.currentConnectionID(), r.gameDefinition.TurnDuration())
 		}
 		r.waitForAction(r.gameDefinition.TurnDuration())
 	} else {
-		r.players[playerID].client.OutMessages <- messages.NewAwaitingPlayersMessage()
+		r.players[connectionID].client.OutMessages <- messages.NewAwaitingPlayersMessage()
 	}
 }
 
-func (r *Room) aggregateMessages(playerID string) {
+func (r *Room) aggregateMessages(connectionID string) {
 	go func(c chan messages.GameMessage) {
 		for msg := range c {
 			r.aggregateGameMessages <- msg
 		}
-	}(r.players[playerID].game.OutMessages())
+	}(r.players[connectionID].game.OutMessages())
 	go func(c chan cl.ClientMessage) {
 		for msg := range c {
 			r.aggregateClientMessages <- msg
 		}
-	}(r.players[playerID].client.InMessages)
+	}(r.players[connectionID].client.InMessages)
+	go func(c chan string) {
+		for msg := range c {
+			r.aggregateLeavers <- msg
+		}
+	}(r.players[connectionID].client.Leavers)
 }
 
-func (r *Room) currentPlayerID() string {
-	return r.playersInOrder[r.currentPlayerIndex]
+func (r *Room) currentConnectionID() string {
+	return r.connectionsInOrder[r.currentConnectionIndex]
 }
 
 func (r Room) String() string {
-	return fmt.Sprintf("Hej i am a room and can hold %d and have %d and it is this players turn: %s", r.maxPlayers, len(r.playersInOrder), r.currentPlayerID())
+	return fmt.Sprintf("Hej i am a room and can hold %d and have %d and it is this players turn: %s", r.maxPlayers, len(r.connectionsInOrder), r.currentConnectionID())
 }
 
 func (r *Room) isFull() bool {
-	return len(r.playersInOrder) == r.maxPlayers
+	return len(r.connectionsInOrder) == r.maxPlayers
 }
 
 func (r *Room) Run() {
@@ -91,33 +98,38 @@ func (r *Room) Run() {
 			if bm.Type == "PLAY" {
 				pm := messages.PlayMessage{}
 				json.Unmarshal(rm.Message, &pm)
-				r.players[rm.PlayerID].username = pm.Username
+				r.players[rm.ConnectionID].username = pm.Username
 			} else if !r.isFull() {
 				log.Println("room not full, skipping")
-			} else if rm.PlayerID != r.currentPlayerID() {
+			} else if rm.ConnectionID != r.currentConnectionID() {
 				log.Println("Other player sends message, skip")
 			} else {
 				r.waitTimer.Stop()
-				r.players[rm.PlayerID].game.InMessages() <- rm.Message
+				r.players[rm.ConnectionID].game.InMessages() <- rm.Message
 				r.waitForAction(r.gameDefinition.TurnDuration())
 			}
 		case m := <-r.aggregateGameMessages:
 			switch cm := m.Message.(type) {
 			case messages.TurnMessage:
-				r.nextPlayer(cm.Duration)
+				r.nextConnection(cm.Duration)
 			case messages.VictoryMessage:
 				for _, pl := range r.players {
-					if pl.playerID == r.currentPlayerID() {
-						r.players[pl.playerID].client.OutMessages <- m.Message
+					if pl.connectionID == r.currentConnectionID() {
+						r.players[pl.connectionID].client.OutMessages <- m.Message
 					} else {
-						r.players[pl.playerID].client.OutMessages <- messages.NewLossMessage()
+						r.players[pl.connectionID].client.OutMessages <- messages.NewLossMessage()
 					}
 
 				}
 			default:
-				r.players[m.PlayerID].client.OutMessages <- m.Message
+				r.players[m.ConnectionID].client.OutMessages <- m.Message
 			}
-
+		case m := <-r.aggregateLeavers:
+			log.Printf("player left %s", m)
+			// add player id to leavers
+			// remove from players
+			// remove from players inorder
+			// reset currentplayer if needed
 		}
 
 	}
@@ -125,15 +137,15 @@ func (r *Room) Run() {
 
 func (r *Room) waitForAction(duration int) {
 	r.waitTimer = time.AfterFunc(time.Duration(duration)*time.Second, func() {
-		r.nextPlayer(duration)
+		r.nextConnection(duration)
 	})
 }
 
-func (r *Room) nextPlayer(duration int) {
+func (r *Room) nextConnection(duration int) {
 	r.waitTimer.Stop()
-	r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
+	r.currentConnectionIndex = (r.currentConnectionIndex + 1) % len(r.players)
 	for _, pl := range r.players {
-		r.players[pl.playerID].client.OutMessages <- messages.NewTurnMessage(pl.playerID == r.currentPlayerID(), duration)
+		r.players[pl.connectionID].client.OutMessages <- messages.NewTurnMessage(pl.connectionID == r.currentConnectionID(), duration)
 	}
 	r.waitForAction(duration)
 }

@@ -15,7 +15,7 @@ type GameDefinition interface {
 }
 
 type GameCreator interface {
-	Game(playerID string) Game
-	FromExisting(playerID string, game Game) (Game, error)
+	Game(connectionID string) Game
+	FromExisting(connectionID string, game Game) (Game, error)
 	GameDefinition(gameName string) GameDefinition
 }

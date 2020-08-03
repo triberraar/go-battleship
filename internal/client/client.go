@@ -21,19 +21,23 @@ const (
 )
 
 type Client struct {
-	Conn        *websocket.Conn
-	PlayerID    string
-	OutMessages chan interface{}
-	InMessages  chan ClientMessage
+	Conn         *websocket.Conn
+	ConnectionID string
+	OutMessages  chan interface{}
+	InMessages   chan ClientMessage
+	Leavers      chan string
 }
 
 type ClientMessage struct {
-	PlayerID string
-	Message  []byte
+	ConnectionID string
+	Message      []byte
 }
 
 func (c *Client) ReadPump() {
-	defer c.Conn.Close()
+	defer func() {
+		c.Leavers <- c.ConnectionID
+		c.Conn.Close()
+	}()
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error {
 		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -42,7 +46,7 @@ func (c *Client) ReadPump() {
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
-			log.Printf("error: %v", err)
+			log.Printf("readpump error: %v", err)
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Println("unexcpected close")
 			}
@@ -50,7 +54,7 @@ func (c *Client) ReadPump() {
 		}
 		bm := messages.BaseMessage{}
 		json.Unmarshal(message, &bm)
-		c.InMessages <- ClientMessage{c.PlayerID, message}
+		c.InMessages <- ClientMessage{c.ConnectionID, message}
 	}
 }
 
@@ -66,4 +70,8 @@ func (c *Client) WritePump() {
 			}
 		}
 	}
+}
+
+func (c *Client) Close() {
+	c.Conn.Close()
 }

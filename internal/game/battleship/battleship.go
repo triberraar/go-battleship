@@ -18,18 +18,18 @@ const (
 type BattleshipGameCreator struct {
 }
 
-func (bgc BattleshipGameCreator) Game(playerID string) game.Game {
-	return NewBattleship(playerID)
+func (bgc BattleshipGameCreator) Game(connectionID string) game.Game {
+	return NewBattleship(connectionID)
 }
 
 func (bgc BattleshipGameCreator) GameDefinition(gameName string) game.GameDefinition {
 	return NewGameDefinition(gameName)
 }
 
-func (bgc BattleshipGameCreator) FromExisting(playerID string, game game.Game) (game.Game, error) {
+func (bgc BattleshipGameCreator) FromExisting(connectionID string, game game.Game) (game.Game, error) {
 	bs, ok := game.(*Battleship)
 	if ok {
-		return bs.NewBattleshipFromExisting(playerID), nil
+		return bs.NewBattleshipFromExisting(connectionID), nil
 	}
 	return nil, errors.New("unknown game")
 
@@ -83,9 +83,9 @@ func NewGameDefinition(gameName string) game.GameDefinition {
 }
 
 type Battleship struct {
-	inMessages  chan []byte
-	outMessages chan messages.GameMessage
-	playerID    string
+	inMessages   chan []byte
+	outMessages  chan messages.GameMessage
+	connectionID string
 
 	board     [][]tile
 	dimension int
@@ -94,7 +94,7 @@ type Battleship struct {
 }
 
 func (bs *Battleship) SendMessage(message interface{}) {
-	bs.outMessages <- messages.GameMessage{bs.playerID, message}
+	bs.outMessages <- messages.GameMessage{bs.connectionID, message}
 }
 
 func (bs *Battleship) Run() {
@@ -134,13 +134,13 @@ func (bs *Battleship) Run() {
 	}
 }
 
-func NewBattleship(playerID string) game.Game {
+func NewBattleship(connectionID string) game.Game {
 	bs := Battleship{
-		dimension:   10,
-		victory:     false,
-		inMessages:  make(chan []byte, 10),
-		outMessages: make(chan messages.GameMessage, 10),
-		playerID:    playerID,
+		dimension:    10,
+		victory:      false,
+		inMessages:   make(chan []byte, 10),
+		outMessages:  make(chan messages.GameMessage, 10),
+		connectionID: connectionID,
 	}
 	bs.newBoard()
 	var shipSizes [len(bs.ships)]int
@@ -152,13 +152,13 @@ func NewBattleship(playerID string) game.Game {
 	return &bs
 }
 
-func (bs *Battleship) NewBattleshipFromExisting(playerID string) game.Game {
+func (bs *Battleship) NewBattleshipFromExisting(connectionID string) game.Game {
 	nbs := Battleship{
-		dimension:   bs.dimension,
-		victory:     false,
-		inMessages:  make(chan []byte, 10),
-		outMessages: make(chan messages.GameMessage, 10),
-		playerID:    playerID,
+		dimension:    bs.dimension,
+		victory:      false,
+		inMessages:   make(chan []byte, 10),
+		outMessages:  make(chan messages.GameMessage, 10),
+		connectionID: connectionID,
 	}
 
 	board := make([][]tile, len(bs.board))
