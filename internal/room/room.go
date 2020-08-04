@@ -26,9 +26,18 @@ type Room struct {
 	aggregateGameMessages   chan messages.GameMessage
 	aggregateClientMessages chan client.ClientMessage
 	aggregateLeavers        chan string
-	waitTimer               *time.Timer
+	waitTimer               *SecondsTimer
 	gameDefinition          game.GameDefinition
 	leavers                 map[string]string
+}
+
+type SecondsTimer struct {
+	timer *time.Timer
+	end   time.Time
+}
+
+func (s *SecondsTimer) TimeRemaining() time.Duration {
+	return s.end.Sub(time.Now())
 }
 
 func NewRoom(maxPlayers int, gameName string) *Room {
@@ -63,6 +72,10 @@ func (r *Room) rejoinPlayer(client *cl.Client) {
 	r.players[client.Username].client = client
 	r.players[client.Username].game.Rejoin()
 	r.aggregateMessages(client.Username)
+	if r.currentPlayer() == client.Username {
+		log.Println("send turne message")
+		client.OutMessages <- messages.NewTurnMessage(true, int(r.waitTimer.TimeRemaining().Seconds()))
+	}
 }
 
 func (r *Room) HasPlayer(username string) bool {
@@ -111,7 +124,7 @@ func (r *Room) Run() {
 			} else if rm.Username != r.currentPlayer() {
 				log.Println("Other player sends message, skip")
 			} else {
-				r.waitTimer.Stop()
+				r.waitTimer.timer.Stop()
 				r.players[rm.Username].game.InMessages() <- rm.Message
 				r.waitForAction(r.gameDefinition.TurnDuration())
 			}
@@ -139,13 +152,15 @@ func (r *Room) Run() {
 }
 
 func (r *Room) waitForAction(duration int) {
-	r.waitTimer = time.AfterFunc(time.Duration(duration)*time.Second, func() {
+	d := time.Duration(duration) * time.Second
+	timer := time.AfterFunc(d, func() {
 		r.nextConnection(duration)
 	})
+	r.waitTimer = &SecondsTimer{timer, time.Now().Add(d)}
 }
 
 func (r *Room) nextConnection(duration int) {
-	r.waitTimer.Stop()
+	r.waitTimer.timer.Stop()
 	r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
 	for _, pl := range r.players {
 		pl.client.OutMessages <- messages.NewTurnMessage(pl.client.Username == r.currentPlayer(), duration)
