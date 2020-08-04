@@ -20,5 +20,6 @@ module.exports = {
     'class-methods-use-this': 0,
     'object-curly-newline': 0,
     '@typescript-eslint/member-delimiter-style': 0,
+    'operator-linebreak': 0,
   },
 }

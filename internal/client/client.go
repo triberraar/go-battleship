@@ -57,7 +57,8 @@ func (c *Client) ReadPump() {
 		}
 		bm := messages.BaseMessage{}
 		json.Unmarshal(message, &bm)
-		if bm.Type == "PLAY" {
+		if bm.Type == "PING" {
+		} else if bm.Type == "PLAY" {
 			pm := messages.PlayMessage{}
 			json.Unmarshal(message, &pm)
 			c.Joiner <- pm

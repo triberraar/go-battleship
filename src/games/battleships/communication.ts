@@ -46,6 +46,8 @@ export default class CommunicationManager {
 
   private ws: WebSocket
 
+  private pingTimer: number
+
   constructor() {
     const loc = window.location
     let wsUri = ''
@@ -62,6 +64,8 @@ export default class CommunicationManager {
     this.ws = new WebSocket(wsUri)
     this.ws.onmessage = this.onmessage
     this.ws.onerror = this.onerror
+    this.ws.onopen = this.onopen
+    this.ws.onclose = this.onclose
   }
 
   close() {
@@ -69,12 +73,26 @@ export default class CommunicationManager {
   }
 
   send(message: string) {
-    if (this.ws.readyState !== 1) {
-      console.log('waiting for connection')
-      setTimeout(() => this.send(message), 5)
-    } else {
+    console.log('semd')
+    if (this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(message)
+    } else if (this.ws.readyState === WebSocket.CONNECTING) {
+      console.log('waiting for connection')
+      setTimeout(() => this.send(message), 1000)
+    } else if (
+      this.ws.readyState === WebSocket.CLOSING ||
+      this.ws.readyState === WebSocket.CLOSED
+    ) {
+      // reconnect
     }
+  }
+
+  onopen = () => {
+    this.pingTimer = setInterval(() => this.send(JSON.stringify({ type: 'PING' })), 5000)
+  }
+
+  onclose = () => {
+    clearInterval(this.pingTimer)
   }
 
   onmessage = (ev: MessageEvent) => {
@@ -125,6 +143,7 @@ export default class CommunicationManager {
 
   onerror = (ev: Event) => {
     console.log(`error ${ev}`)
+    clearInterval(this.pingTimer)
   }
 
   setBoardManager(boardManager: BoardManager) {
