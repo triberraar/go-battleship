@@ -9,16 +9,16 @@ import (
 
 var gameCreators = map[string]game.GameCreator{"battleships": battleship.BattleshipGameCreator{}}
 
-func NewGame(gameName string, connectionID string) (game.Game, error) {
+func NewGame(gameName string, username string) (game.Game, error) {
 	if val, ok := gameCreators[gameName]; ok {
-		return val.Game(connectionID), nil
+		return val.Game(username), nil
 	}
 	return nil, errors.New("unknown game")
 }
 
-func NewGameFromExistion(gameName string, game game.Game, connectionID string) (game.Game, error) {
+func NewGameFromExistion(gameName string, game game.Game, username string) (game.Game, error) {
 	if val, ok := gameCreators[gameName]; ok {
-		return val.FromExisting(connectionID, game)
+		return val.FromExisting(username, game)
 	}
 	return nil, errors.New("unknown game")
 

@@ -21,21 +21,24 @@ const (
 )
 
 type Client struct {
-	Conn         *websocket.Conn
-	ConnectionID string
-	OutMessages  chan interface{}
-	InMessages   chan ClientMessage
-	Leavers      chan string
+	Conn        *websocket.Conn
+	OutMessages chan interface{}
+	InMessages  chan ClientMessage
+	Leaver      chan string
+	Joiner      chan messages.PlayMessage
+	Username    string
 }
 
 type ClientMessage struct {
-	ConnectionID string
-	Message      []byte
+	Username string
+	Message  []byte
 }
 
 func (c *Client) ReadPump() {
 	defer func() {
-		c.Leavers <- c.ConnectionID
+		if c.Username == "" {
+			c.Leaver <- c.Username
+		}
 		c.Conn.Close()
 	}()
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -54,7 +57,14 @@ func (c *Client) ReadPump() {
 		}
 		bm := messages.BaseMessage{}
 		json.Unmarshal(message, &bm)
-		c.InMessages <- ClientMessage{c.ConnectionID, message}
+		if bm.Type == "PLAY" {
+			pm := messages.PlayMessage{}
+			json.Unmarshal(message, &pm)
+			c.Joiner <- pm
+		} else {
+			c.InMessages <- ClientMessage{c.Username, message}
+		}
+
 	}
 }
 

@@ -140,6 +140,7 @@ export default class CommunicationManager {
   }
 
   play() {
+    console.log(`player ${UserStore.state.username}`)
     this.send(JSON.stringify({ type: 'PLAY', username: UserStore.state.username }))
   }
 

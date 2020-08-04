@@ -4,10 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
-
 	"github.com/gorilla/websocket"
 	"github.com/triberraar/go-battleship/internal/client"
+	"github.com/triberraar/go-battleship/internal/messages"
 	"github.com/triberraar/go-battleship/internal/room"
 )
 
@@ -23,9 +22,13 @@ func Battleship(rm *room.RoomManager, w http.ResponseWriter, r *http.Request) {
 		log.Print("upgrade:", err)
 		return
 	}
-	client := &client.Client{Conn: c, ConnectionID: uuid.New().String(), OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10), Leavers: make(chan string, 2)}
+	client := &client.Client{Conn: c, OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10), Leaver: make(chan string, 1), Joiner: make(chan messages.PlayMessage, 1)}
 
-	rm.JoinRoom(client, "battleships")
+	go func(c chan messages.PlayMessage) {
+		msg := <-c
+		client.Username = msg.Username
+		rm.JoinRoom(client, "battleships")
+	}(client.Joiner)
 
 	go client.ReadPump()
 	go client.WritePump()

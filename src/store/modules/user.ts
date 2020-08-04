@@ -4,17 +4,17 @@ import { VuexModule, Module, Mutation, Action } from 'vuex-module-decorators'
 class User extends VuexModule {
   loggedIn = false
 
-  userName = ''
+  username = ''
 
   @Mutation
-  public LOG_IN(userName: string): void {
+  public LOG_IN(username: string): void {
     this.loggedIn = true
-    this.userName = userName
+    this.username = username
   }
 
   @Action
-  public logIn(userName: string): void {
-    this.context.commit('LOG_IN', userName)
+  public logIn(username: string): void {
+    this.context.commit('LOG_IN', username)
   }
 
   @Mutation
