@@ -189,6 +189,32 @@ func (bs *Battleship) NewBattleshipFromExisting(username string) game.Game {
 	return &nbs
 }
 
+func (bs *Battleship) Rejoin() {
+	var shipSizes [len(bs.ships)]int
+	destroys := make([]messages.ShipDestroyedMessage, 0)
+	for i := 0; i < len(bs.ships); i++ {
+		shipSizes[i] = bs.ships[i].size
+		if bs.ships[i].isDestroyed() {
+			destroys = append(destroys, messages.NewShipDestroyedMessage(messages.Coordinate{bs.ships[i].x, bs.ships[i].y}, bs.ships[i].size, bs.ships[i].vertical))
+		}
+	}
+	bs.SendMessage(messages.NewBoardMessage(shipSizes[:]))
+
+	hits := make([]messages.HitMessage, 0)
+	misses := make([]messages.MissMessage, 0)
+	for i := 0; i < len(bs.board); i++ {
+		for j := 0; j < len(bs.board[i]); j++ {
+			if bs.board[i][j].status == "fired" && bs.board[i][j].ship == nil {
+				misses = append(misses, messages.NewMissMessage(messages.Coordinate{i, j}))
+			} else if bs.board[i][j].status == "fired" && bs.board[i][j].ship != nil {
+				hits = append(hits, messages.NewHitMessage(messages.Coordinate{i, j}))
+			}
+		}
+	}
+	bs.SendMessage(messages.NewBoardStateMessage(hits, misses, destroys))
+
+}
+
 func (bs *Battleship) InMessages() chan []byte {
 	return bs.inMessages
 }

@@ -1,42 +1,42 @@
 package messages
 
 // HitMessage send to player when he hits stuff
-type hitMessage struct {
+type HitMessage struct {
 	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 }
 
 // NewHitMessage constructor function
-func NewHitMessage(coordinate Coordinate) hitMessage {
-	return hitMessage{
+func NewHitMessage(coordinate Coordinate) HitMessage {
+	return HitMessage{
 		BaseMessage: BaseMessage{Type: "HIT"},
 		Coordinate:  coordinate,
 	}
 }
 
 // MissMessage send to player when he misses stuff
-type missMessage struct {
+type MissMessage struct {
 	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 }
 
 // NewMissMessage constructor function
-func NewMissMessage(coordinate Coordinate) missMessage {
-	return missMessage{
+func NewMissMessage(coordinate Coordinate) MissMessage {
+	return MissMessage{
 		BaseMessage: BaseMessage{Type: "MISS"},
 		Coordinate:  coordinate,
 	}
 }
 
-type shipDestroyedMessage struct {
+type ShipDestroyedMessage struct {
 	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 	ShipSize   int        `json:"shipSize"`
 	Vertical   bool       `json:"vertical"`
 }
 
-func NewShipDestroyedMessage(coordinate Coordinate, shipSize int, vertical bool) shipDestroyedMessage {
-	return shipDestroyedMessage{
+func NewShipDestroyedMessage(coordinate Coordinate, shipSize int, vertical bool) ShipDestroyedMessage {
+	return ShipDestroyedMessage{
 		BaseMessage: BaseMessage{Type: "SHIP_DESTROYED"},
 		Coordinate:  coordinate,
 		ShipSize:    shipSize,
@@ -123,5 +123,21 @@ func NewTurnExtendedMessage(duration int) TurnExtendedMessage {
 		BaseMessage: BaseMessage{Type: "TURN_EXTENDED"},
 		Turn:        true,
 		Duration:    duration,
+	}
+}
+
+type boardStateMessage struct {
+	BaseMessage
+	Hits    []HitMessage           `json:"hits"`
+	Misses  []MissMessage          `json:"misses"`
+	Destoys []ShipDestroyedMessage `json:"destroys"`
+}
+
+func NewBoardStateMessage(hits []HitMessage, misses []MissMessage, destroys []ShipDestroyedMessage) boardStateMessage {
+	return boardStateMessage{
+		BaseMessage: BaseMessage{Type: "BOARD_STATE"},
+		Hits:        hits,
+		Misses:      misses,
+		Destoys:     destroys,
 	}
 }

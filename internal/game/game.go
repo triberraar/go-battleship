@@ -7,6 +7,7 @@ import (
 type Game interface {
 	OutMessages() chan messages.GameMessage
 	InMessages() chan []byte
+	Rejoin()
 }
 
 type GameDefinition interface {

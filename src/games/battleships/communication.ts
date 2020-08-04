@@ -1,6 +1,7 @@
 import BoardManager from './board' // eslint-disable-line
 import FeedbackText from './feedbackText'
 import UserStore from '@/store/modules/user'
+import Store from '@/store/index'
 
 interface Coordinate {
   x: number
@@ -39,16 +40,34 @@ interface TurnExtendedMessage {
   duration: number
 }
 
+interface BoardStateMessage {
+  destroys: ShipDestroyedMessage[]
+  hits: HitMessage[]
+  misses: MissMessage[]
+}
+
 export default class CommunicationManager {
   private boardManager: BoardManager
-
   private feedbackText: FeedbackText
 
   private ws: WebSocket
-
-  private pingTimer: number
+  // private pingTimer: number
+  private reconnectAttempts = 0
 
   constructor() {
+    this.reconnect()
+  }
+
+  close() {
+    this.feedbackText.clear()
+    this.ws.close(1000)
+  }
+
+  reconnect() {
+    if (this.reconnectAttempts > 15) {
+      Store.commit('FAILED')
+      return
+    }
     const loc = window.location
     let wsUri = ''
     if (loc.protocol === 'https:') {
@@ -61,6 +80,7 @@ export default class CommunicationManager {
       wsUri = 'ws://localhost:10002/battleship'
     }
 
+    this.reconnectAttempts++
     this.ws = new WebSocket(wsUri)
     this.ws.onmessage = this.onmessage
     this.ws.onerror = this.onerror
@@ -68,31 +88,36 @@ export default class CommunicationManager {
     this.ws.onclose = this.onclose
   }
 
-  close() {
-    this.ws.close(1000)
-  }
-
   send(message: string) {
-    console.log('semd')
     if (this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(message)
     } else if (this.ws.readyState === WebSocket.CONNECTING) {
       console.log('waiting for connection')
       setTimeout(() => this.send(message), 1000)
-    } else if (
-      this.ws.readyState === WebSocket.CLOSING ||
-      this.ws.readyState === WebSocket.CLOSED
-    ) {
-      // reconnect
     }
   }
 
   onopen = () => {
-    this.pingTimer = setInterval(() => this.send(JSON.stringify({ type: 'PING' })), 5000)
+    Store.commit('CONNECTED')
+    this.reconnectAttempts = 0
+    this.play()
   }
 
-  onclose = () => {
-    clearInterval(this.pingTimer)
+  onerror = (ev: Event) => {
+    console.log(`error ${ev}`)
+    // clearInterval(this.pingTimer)
+    Store.commit('RECONNECTING')
+  }
+
+  onclose = (ev: CloseEvent) => {
+    // clearInterval(this.pingTimer)
+    console.log(`onclose ${ev}`)
+    if (!ev.wasClean) {
+      Store.commit('RECONNECTING')
+      setTimeout(() => this.reconnect(), 1000)
+    } else {
+      Store.commit('DISCONNECTED')
+    }
   }
 
   onmessage = (ev: MessageEvent) => {
@@ -134,16 +159,15 @@ export default class CommunicationManager {
         this.onTurnExtended(m)
         break
       }
+      case 'BOARD_STATE': {
+        this.onBoardState(m)
+        break
+      }
       default: {
         console.error(`unknowns message ${m.type}`)
         break
       }
     }
-  }
-
-  onerror = (ev: Event) => {
-    console.log(`error ${ev}`)
-    clearInterval(this.pingTimer)
   }
 
   setBoardManager(boardManager: BoardManager) {
@@ -209,5 +233,11 @@ export default class CommunicationManager {
 
   onTurnExtended(m: TurnExtendedMessage) {
     this.feedbackText.setCountDownText('Your turn', m.duration)
+  }
+
+  onBoardState(m: BoardStateMessage) {
+    m.destroys.forEach(d => this.onShipDestroyed(d))
+    m.hits.forEach(h => this.onHit(h))
+    m.misses.forEach(ms => this.onMiss(ms))
   }
 }

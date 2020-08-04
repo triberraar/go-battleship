@@ -3,13 +3,15 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import { getModule } from 'vuex-module-decorators'
 import User from '@/store/modules/user'
+import Battleship from '@/store/modules/battleship'
 
 @Component({})
 export default class Battleships extends Vue {
   userModule = getModule(User, this.$store)
+  battleshipModule = getModule(Battleship, this.$store)
 
   gameInstance: Phaser.Game
 
@@ -25,9 +27,7 @@ export default class Battleships extends Vue {
       this.$router.push({ name: 'Games' })
       return
     }
-    const game = await import(
-      /* webpackChunkName: "game" */ '@/games/battleships/battleships'
-    )
+    const game = await import(/* webpackChunkName: "game" */ '@/games/battleships/battleships')
     this.$nextTick(() => {
       this.gameInstance = game.launchBattleships(this.containerId)
     })
@@ -36,6 +36,26 @@ export default class Battleships extends Vue {
   destroyed() {
     if (this.gameInstance) {
       this.gameInstance.destroy(true)
+    }
+  }
+
+  @Watch('battleshipModule.connected')
+  connectionChanged(n: string, o: string) {
+    if (n === 'RECONNECTING') {
+      this.$buefy.toast.open({
+        message: 'Disconnected, trying to reconnect',
+        type: 'is-warning'
+      })
+    } else if (n === 'CONNECTED') {
+      this.$buefy.toast.open({
+        message: 'Connected',
+        type: 'is-success'
+      })
+    } else if (n === 'FAILED') {
+      this.$buefy.toast.open({
+        message: 'Failed to connect, curling up and dieing',
+        type: 'is-danger'
+      })
     }
   }
 }

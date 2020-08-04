@@ -21,5 +21,6 @@ module.exports = {
     'object-curly-newline': 0,
     '@typescript-eslint/member-delimiter-style': 0,
     'operator-linebreak': 0,
+    'lines-between-class-members': 0,
   },
 }

@@ -27,4 +27,8 @@ export default class FeedbackText extends Phaser.GameObjects.GameObject {
       }
     }, 1000)
   }
+
+  clear() {
+    if (this.countDownTimer) clearInterval(this.countDownTimer)
+  }
 }

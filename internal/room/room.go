@@ -37,7 +37,7 @@ func NewRoom(maxPlayers int, gameName string) *Room {
 }
 
 func (r *Room) joinPlayer(client *cl.Client) {
-	log.Printf("joining %s", client.Username)
+	log.Printf("Joining %s", client.Username)
 	r.playersInOrder = append(r.playersInOrder, client.Username)
 	if len(r.players) == 0 {
 		game, _ := creator.NewGame(r.gameDefinition.GameName(), client.Username)
@@ -55,6 +55,19 @@ func (r *Room) joinPlayer(client *cl.Client) {
 	} else {
 		client.OutMessages <- messages.NewAwaitingPlayersMessage()
 	}
+}
+
+func (r *Room) rejoinPlayer(client *cl.Client) {
+	log.Printf("Rejoining %s", client.Username)
+	// cleanup some stuff?
+	r.players[client.Username].client = client
+	r.players[client.Username].game.Rejoin()
+	r.aggregateMessages(client.Username)
+}
+
+func (r *Room) HasPlayer(username string) bool {
+	_, ok := r.players[username]
+	return ok
 }
 
 func (r *Room) aggregateMessages(username string) {
@@ -120,10 +133,6 @@ func (r *Room) Run() {
 			}
 		case m := <-r.aggregateLeavers:
 			log.Printf("player left %s", m)
-			// add player id to leavers
-			// remove from players
-			// remove from players inorder
-			// reset currentplayer if needed
 		}
 
 	}

@@ -23,6 +23,14 @@ func (rm RoomManager) String() string {
 
 func (rm *RoomManager) JoinRoom(client *client.Client, gameName string) {
 	rm.joinMutex.Lock()
+	for _, room := range rm.rooms {
+		log.Println(client.Username)
+		if room.HasPlayer(client.Username) {
+			room.rejoinPlayer(client)
+			rm.joinMutex.Unlock()
+			return
+		}
+	}
 	if len(rm.rooms) == 0 || rm.rooms[len(rm.rooms)-1].isFull() {
 		log.Println("Creating new room")
 		room := NewRoom(2, gameName)
