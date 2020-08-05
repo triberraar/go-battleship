@@ -79,6 +79,7 @@ export default class CommunicationManager {
     if (loc.host.startsWith('localhost')) {
       wsUri = 'ws://localhost:10002/battleship'
     }
+    wsUri += `?username=${UserStore.state.username}`
 
     this.reconnectAttempts++
     this.ws = new WebSocket(wsUri)

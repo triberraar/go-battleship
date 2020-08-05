@@ -25,7 +25,6 @@ type Client struct {
 	OutMessages chan interface{}
 	InMessages  chan ClientMessage
 	Leaver      chan string
-	Joiner      chan messages.PlayMessage
 	Username    string
 }
 
@@ -58,10 +57,6 @@ func (c *Client) ReadPump() {
 		bm := messages.BaseMessage{}
 		json.Unmarshal(message, &bm)
 		if bm.Type == "PING" {
-		} else if bm.Type == "PLAY" {
-			pm := messages.PlayMessage{}
-			json.Unmarshal(message, &pm)
-			c.Joiner <- pm
 		} else {
 			c.InMessages <- ClientMessage{c.Username, message}
 		}
