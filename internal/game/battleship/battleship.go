@@ -212,7 +212,11 @@ func (bs *Battleship) Rejoin() {
 		}
 	}
 	bs.SendMessage(messages.NewBoardStateMessage(hits, misses, destroys))
+}
 
+func (bs *Battleship) Close() {
+	close(bs.inMessages)
+	close(bs.outMessages)
 }
 
 func (bs *Battleship) InMessages() chan []byte {

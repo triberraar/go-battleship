@@ -24,7 +24,6 @@ func (rm RoomManager) String() string {
 func (rm *RoomManager) JoinRoom(client *client.Client, gameName string) {
 	rm.joinMutex.Lock()
 	for _, room := range rm.rooms {
-		log.Println(client.Username)
 		if room.HasPlayer(client.Username) {
 			room.rejoinPlayer(client)
 			rm.joinMutex.Unlock()

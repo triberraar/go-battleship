@@ -21,7 +21,7 @@ func Battleship(rm *room.RoomManager, w http.ResponseWriter, r *http.Request) {
 		log.Print("upgrade:", err)
 		return
 	}
-	client := &client.Client{Conn: c, OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10), Leaver: make(chan string, 1), Username: r.URL.Query()["username"][0]}
+	client := &client.Client{Conn: c, OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10), Username: r.URL.Query()["username"][0]}
 
 	rm.JoinRoom(client, "battleships")
 

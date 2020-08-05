@@ -8,6 +8,7 @@ type Game interface {
 	OutMessages() chan messages.GameMessage
 	InMessages() chan []byte
 	Rejoin()
+	Close()
 }
 
 type GameDefinition interface {

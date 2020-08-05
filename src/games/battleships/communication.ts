@@ -209,6 +209,7 @@ export default class CommunicationManager {
   onLoss() {
     this.boardManager.loss()
     this.feedbackText.setText('The other dummy won, loser')
+    this.close()
   }
 
   onBoard(m: BoardMessage) {

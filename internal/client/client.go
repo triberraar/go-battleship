@@ -24,7 +24,6 @@ type Client struct {
 	Conn        *websocket.Conn
 	OutMessages chan interface{}
 	InMessages  chan ClientMessage
-	Leaver      chan string
 	Username    string
 }
 
@@ -35,9 +34,6 @@ type ClientMessage struct {
 
 func (c *Client) ReadPump() {
 	defer func() {
-		if c.Username == "" {
-			c.Leaver <- c.Username
-		}
 		c.Conn.Close()
 	}()
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -79,5 +75,10 @@ func (c *Client) WritePump() {
 }
 
 func (c *Client) Close() {
-	c.Conn.Close()
+	err := c.Conn.Close()
+	if err != nil {
+		log.Printf("close error %v", err)
+	}
+	close(c.OutMessages)
+	close(c.InMessages)
 }
