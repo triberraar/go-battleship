@@ -32,6 +32,8 @@ type Room struct {
 	aggregateClientMessages chan client.ClientMessage
 	waitTimer               *SecondsTimer
 	gameDefinition          game.GameDefinition
+	finished                bool
+	removeMe                chan bool
 }
 
 type SecondsTimer struct {
@@ -45,7 +47,7 @@ func (s *SecondsTimer) TimeRemaining() time.Duration {
 
 func NewRoom(maxPlayers int, gameName string) *Room {
 	gd, _ := creator.NewGameDefinition(gameName)
-	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10), gameDefinition: gd}
+	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10), gameDefinition: gd, finished: false, removeMe: make(chan bool)}
 }
 
 func (r *Room) joinPlayer(client *cl.Client) {
@@ -73,7 +75,6 @@ func (r *Room) rejoinPlayer(client *cl.Client) {
 	log.Printf("Rejoining %s", client.Username)
 	r.players[client.Username].client.Close()
 
-	// cleanup some stuff?
 	r.players[client.Username].client = client
 	r.players[client.Username].game.Rejoin()
 	r.aggregateMessages(client.Username)
@@ -82,7 +83,7 @@ func (r *Room) rejoinPlayer(client *cl.Client) {
 
 func (r *Room) HasPlayer(username string) bool {
 	_, ok := r.players[username]
-	return ok
+	return ok && !r.finished
 }
 
 func (r *Room) aggregateMessages(username string) {
@@ -163,5 +164,13 @@ func (r *Room) nextConnection(duration int) {
 }
 
 func (r *Room) close() {
+	for _, pl := range r.players {
+		pl.close()
+	}
+	r.finished = true
+	r.removeMe <- true
+}
 
+func (r *Room) isFinished() bool {
+	return r.finished
 }

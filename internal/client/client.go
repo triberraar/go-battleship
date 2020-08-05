@@ -75,10 +75,6 @@ func (c *Client) WritePump() {
 }
 
 func (c *Client) Close() {
-	err := c.Conn.Close()
-	if err != nil {
-		log.Printf("close error %v", err)
-	}
 	close(c.OutMessages)
 	close(c.InMessages)
 }

@@ -30,11 +30,18 @@ func (rm *RoomManager) JoinRoom(client *client.Client, gameName string) {
 			return
 		}
 	}
-	if len(rm.rooms) == 0 || rm.rooms[len(rm.rooms)-1].isFull() {
+	if len(rm.rooms) == 0 || rm.rooms[len(rm.rooms)-1].isFull() || rm.rooms[len(rm.rooms)-1].isFinished() {
 		log.Println("Creating new room")
 		room := NewRoom(2, gameName)
 		rm.rooms = append(rm.rooms, room)
 		go room.Run()
+		go func(c chan bool) {
+			<-c
+			log.Println("removing finished room")
+			rm.joinMutex.Lock()
+			i := rm.rooms.indexOf(room)
+			rm.joinMutex.Unlock()
+		}(room.removeMe)
 	}
 	var current = rm.rooms[len(rm.rooms)-1]
 	current.joinPlayer(client)
