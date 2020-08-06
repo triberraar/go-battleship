@@ -64,13 +64,13 @@ func NewLossMessage() LossMessage {
 	}
 }
 
-type boardMessage struct {
+type BoardMessage struct {
 	BaseMessage
 	ShipSizes []int `json:"shipSizes"`
 }
 
-func NewBoardMessage(shipSizes []int) boardMessage {
-	return boardMessage{
+func NewBoardMessage(shipSizes []int) BoardMessage {
+	return BoardMessage{
 		BaseMessage: BaseMessage{Type: "BOARD"},
 		ShipSizes:   shipSizes,
 	}
@@ -131,11 +131,13 @@ type boardStateMessage struct {
 	Hits    []HitMessage           `json:"hits"`
 	Misses  []MissMessage          `json:"misses"`
 	Destoys []ShipDestroyedMessage `json:"destroys"`
+	Board   BoardMessage           `json:"board"`
 }
 
-func NewBoardStateMessage(hits []HitMessage, misses []MissMessage, destroys []ShipDestroyedMessage) boardStateMessage {
+func NewBoardStateMessage(hits []HitMessage, misses []MissMessage, destroys []ShipDestroyedMessage, board BoardMessage) boardStateMessage {
 	return boardStateMessage{
 		BaseMessage: BaseMessage{Type: "BOARD_STATE"},
+		Board:       board,
 		Hits:        hits,
 		Misses:      misses,
 		Destoys:     destroys,

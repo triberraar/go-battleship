@@ -41,6 +41,7 @@ interface TurnExtendedMessage {
 }
 
 interface BoardStateMessage {
+  board: BoardMessage
   destroys: ShipDestroyedMessage[]
   hits: HitMessage[]
   misses: MissMessage[]
@@ -190,14 +191,17 @@ export default class CommunicationManager {
 
   onHit(m: HitMessage) {
     this.boardManager.hit(m.coordinate.x, m.coordinate.y)
+    Store.commit(UserStore.state.username, 'HIT')
   }
 
   onMiss(m: MissMessage) {
     this.boardManager.miss(m.coordinate.x, m.coordinate.y)
+    Store.commit(UserStore.state.username, 'MISS')
   }
 
   onShipDestroyed(m: ShipDestroyedMessage) {
     this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
+    Store.commit(UserStore.state.username, 'SHIPDESTROYED')
   }
 
   onVictory() {
@@ -213,7 +217,6 @@ export default class CommunicationManager {
   }
 
   onBoard(m: BoardMessage) {
-    console.log(this.boardManager)
     this.boardManager.ships(m.shipSizes)
   }
 
@@ -238,6 +241,8 @@ export default class CommunicationManager {
   }
 
   onBoardState(m: BoardStateMessage) {
+    Store.commit(UserStore.state.username, 'RESETSTATS')
+    this.boardManager.ships(m.board.shipSizes)
     m.destroys.forEach(d => this.onShipDestroyed(d))
     m.hits.forEach(h => this.onHit(h))
     m.misses.forEach(ms => this.onMiss(ms))

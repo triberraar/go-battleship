@@ -107,4 +107,13 @@ export class OpponentShip extends Phaser.GameObjects.GameObject {
       .setAngle(-90)
       .setOrigin(0, 0)
   }
+
+  matches(size: number, destroyed: boolean) {
+    return this.size === size && destroyed === this.destroyed
+  }
+
+  hide() {
+    this.destroyed = true
+    this.sprite.setVisible(false)
+  }
 }

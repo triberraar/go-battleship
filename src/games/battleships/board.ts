@@ -1,8 +1,6 @@
 import 'phaser'
 import CommunicationManager from './communication' // eslint-disable-line
-import {
-  Ship2, Ship1, Ship3, Ship4, OpponentShip
-} from './ship'
+import { Ship2, Ship1, Ship3, Ship4, OpponentShip } from './ship'
 
 class SeaTile extends Phaser.GameObjects.GameObject {
   private hitSprite: Phaser.GameObjects.Sprite
@@ -109,6 +107,10 @@ export default class BoardManager {
       }
     }
     this.board[x][y].destoryShip(size, vertical)
+    const os = this.opponentShips.find(s => s.matches(size, false))
+    if (os) {
+      os.hide()
+    }
   }
 
   victory() {
@@ -143,19 +145,21 @@ export default class BoardManager {
     })
     for (let i = 0; i < 3; i++) {
       setTimeout(
-        () => this.fireworksEmitter1.explode(
-          150,
-          Math.floor(Math.random() * (750 - 50)) + 50,
-          Math.floor(Math.random() * (550 - 50)) + 50
-        ),
+        () =>
+          this.fireworksEmitter1.explode(
+            150,
+            Math.floor(Math.random() * (750 - 50)) + 50,
+            Math.floor(Math.random() * (550 - 50)) + 50
+          ),
         Math.random() * (5000 - 1000) + 1000
       )
       setTimeout(
-        () => this.fireworksEmitter2.explode(
-          150,
-          Math.floor(Math.random() * (750 - 50)) + 50,
-          Math.floor(Math.random() * (550 - 50)) + 50
-        ),
+        () =>
+          this.fireworksEmitter2.explode(
+            150,
+            Math.floor(Math.random() * (750 - 50)) + 50,
+            Math.floor(Math.random() * (550 - 50)) + 50
+          ),
         Math.random() * (5000 - 1000) + 1000
       )
     }

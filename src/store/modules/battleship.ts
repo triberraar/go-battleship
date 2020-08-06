@@ -1,8 +1,39 @@
 import { VuexModule, Module, Mutation } from 'vuex-module-decorators'
 
+class Statistics {
+  private hits: number
+  private misses: number
+  private destroyed: number
+  constructor(public username: string) {
+    this.hits = 0
+    this.misses = 0
+    this.destroyed = 0
+  }
+
+  hit() {
+    this.hits++
+  }
+
+  miss() {
+    this.misses++
+  }
+
+  shipDestroyed() {
+    this.hits++
+    this.destroyed++
+  }
+
+  reset() {
+    this.hits = 0
+    this.misses = 0
+    this.destroyed = 0
+  }
+}
+
 @Module({ name: 'Battleship' })
 class Battleship extends VuexModule {
   connected = ''
+  statistics: Statistics[] = []
 
   @Mutation
   public CONNECTED(): void {
@@ -22,6 +53,46 @@ class Battleship extends VuexModule {
   @Mutation
   public FAILED(): void {
     this.connected = 'FAILED'
+  }
+
+  @Mutation
+  public HIT(username: string): void {
+    let stat = this.statistics.find(it => it.username === username)
+    if (!stat) {
+      stat = new Statistics(username)
+      this.statistics.push(stat)
+    }
+    stat.hit()
+  }
+
+  @Mutation
+  public MISS(username: string): void {
+    let stat = this.statistics.find(it => it.username === username)
+    if (!stat) {
+      stat = new Statistics(username)
+      this.statistics.push(stat)
+    }
+    stat.miss()
+  }
+
+  @Mutation
+  public SHIPDESTROYED(username: string): void {
+    let stat = this.statistics.find(it => it.username === username)
+    if (!stat) {
+      stat = new Statistics(username)
+      this.statistics.push(stat)
+    }
+    stat.shipDestroyed()
+  }
+
+  @Mutation
+  public RESETSTATS(username: string) {
+    let stat = this.statistics.find(it => it.username === username)
+    if (!stat) {
+      stat = new Statistics(username)
+      this.statistics.push(stat)
+    }
+    stat.reset()
   }
 }
 

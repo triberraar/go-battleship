@@ -198,7 +198,6 @@ func (bs *Battleship) Rejoin() {
 			destroys = append(destroys, messages.NewShipDestroyedMessage(messages.Coordinate{bs.ships[i].x, bs.ships[i].y}, bs.ships[i].size, bs.ships[i].vertical))
 		}
 	}
-	bs.SendMessage(messages.NewBoardMessage(shipSizes[:]))
 
 	hits := make([]messages.HitMessage, 0)
 	misses := make([]messages.MissMessage, 0)
@@ -211,7 +210,7 @@ func (bs *Battleship) Rejoin() {
 			}
 		}
 	}
-	bs.SendMessage(messages.NewBoardStateMessage(hits, misses, destroys))
+	bs.SendMessage(messages.NewBoardStateMessage(hits, misses, destroys, messages.NewBoardMessage(shipSizes[:])))
 }
 
 func (bs *Battleship) Close() {

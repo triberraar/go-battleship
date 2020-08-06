@@ -76,6 +76,7 @@ func (r *Room) rejoinPlayer(client *cl.Client) {
 	r.players[client.Username].game.Rejoin()
 	r.aggregateMessages(client.Username)
 	client.OutMessages <- messages.NewTurnMessage(r.currentPlayer() == client.Username, int(r.waitTimer.TimeRemaining().Seconds()))
+	// should also send all the state of all other players :D
 }
 
 func (r *Room) HasPlayer(username string) bool {
