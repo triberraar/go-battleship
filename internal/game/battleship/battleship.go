@@ -99,8 +99,7 @@ func (bs *Battleship) SendMessage(message interface{}) {
 
 func (bs *Battleship) Run() {
 
-	for {
-		message := <-bs.inMessages
+	for message := range bs.inMessages {
 		bm := messages.BaseMessage{}
 		json.Unmarshal(message, &bm)
 		if bm.Type == "FIRE" && !bs.victory {
@@ -132,6 +131,7 @@ func (bs *Battleship) Run() {
 			}
 		}
 	}
+	log.Printf("game for %s has ended", bs.username)
 }
 
 func NewBattleship(username string) game.Game {

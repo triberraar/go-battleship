@@ -5,16 +5,18 @@ import (
 	"log"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/triberraar/go-battleship/internal/client"
 )
 
 type RoomManager struct {
-	rooms     []*Room
-	joinMutex sync.Mutex
+	rooms       map[uuid.UUID]*Room
+	waitingRoom *Room
+	joinMutex   sync.Mutex
 }
 
 func NewRoomManager() *RoomManager {
-	return &RoomManager{}
+	return &RoomManager{rooms: make(map[uuid.UUID]*Room), waitingRoom: nil}
 }
 
 func (rm RoomManager) String() string {
@@ -30,20 +32,20 @@ func (rm *RoomManager) JoinRoom(client *client.Client, gameName string) {
 			return
 		}
 	}
-	if len(rm.rooms) == 0 || rm.rooms[len(rm.rooms)-1].isFull() || rm.rooms[len(rm.rooms)-1].isFinished() {
+	if rm.waitingRoom == nil || rm.waitingRoom.isFinished() {
 		log.Println("Creating new room")
 		room := NewRoom(2, gameName)
-		rm.rooms = append(rm.rooms, room)
+		rm.rooms[room.id] = room
+		rm.waitingRoom = room
 		go room.Run()
 		go func(c chan bool) {
 			<-c
 			log.Println("removing finished room")
 			rm.joinMutex.Lock()
-			i := rm.rooms.indexOf(room)
+			delete(rm.rooms, room.id)
 			rm.joinMutex.Unlock()
 		}(room.removeMe)
 	}
-	var current = rm.rooms[len(rm.rooms)-1]
-	current.joinPlayer(client)
+	rm.waitingRoom.joinPlayer(client)
 	rm.joinMutex.Unlock()
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/triberraar/go-battleship/internal/client"
 	cl "github.com/triberraar/go-battleship/internal/client"
 	"github.com/triberraar/go-battleship/internal/game"
@@ -16,11 +17,6 @@ import (
 type Player struct {
 	game   game.Game
 	client *client.Client
-}
-
-func (p *Player) close() {
-	p.game.Close()
-	p.client.Close()
 }
 
 type Room struct {
@@ -34,6 +30,7 @@ type Room struct {
 	gameDefinition          game.GameDefinition
 	finished                bool
 	removeMe                chan bool
+	id                      uuid.UUID
 }
 
 type SecondsTimer struct {
@@ -47,7 +44,7 @@ func (s *SecondsTimer) TimeRemaining() time.Duration {
 
 func NewRoom(maxPlayers int, gameName string) *Room {
 	gd, _ := creator.NewGameDefinition(gameName)
-	return &Room{maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10), gameDefinition: gd, finished: false, removeMe: make(chan bool)}
+	return &Room{id: uuid.New(), maxPlayers: maxPlayers, players: make(map[string]*Player), playersInOrder: []string{}, currentPlayerIndex: 0, aggregateGameMessages: make(chan messages.GameMessage, 10), aggregateClientMessages: make(chan cl.ClientMessage, 10), gameDefinition: gd, finished: false, removeMe: make(chan bool)}
 }
 
 func (r *Room) joinPlayer(client *cl.Client) {
@@ -91,11 +88,13 @@ func (r *Room) aggregateMessages(username string) {
 		for msg := range c {
 			r.aggregateGameMessages <- msg
 		}
+		log.Println("stopped aggregating")
 	}(r.players[username].game.OutMessages())
 	go func(c chan cl.ClientMessage) {
 		for msg := range c {
 			r.aggregateClientMessages <- msg
 		}
+		log.Println("stopped aggregating")
 	}(r.players[username].client.InMessages)
 }
 
@@ -112,6 +111,18 @@ func (r *Room) isFull() bool {
 }
 
 func (r *Room) Run() {
+	endChannel := make(chan bool, 5)
+	r.listenForMessages(endChannel)
+	log.Println("room ended")
+	for _, pl := range r.players {
+		close(pl.game.InMessages())
+		close(pl.game.OutMessages())
+		close(pl.client.InMessages)
+	}
+	r.removeMe <- true
+}
+
+func (r *Room) listenForMessages(endChannel chan bool) {
 	for {
 		select {
 		case rm := <-r.aggregateClientMessages:
@@ -131,6 +142,7 @@ func (r *Room) Run() {
 			case messages.TurnMessage:
 				r.nextConnection(cm.Duration)
 			case messages.VictoryMessage:
+				r.finished = true
 				for _, pl := range r.players {
 					if pl.client.Username == r.currentPlayer() {
 						pl.client.OutMessages <- m.Message
@@ -138,10 +150,12 @@ func (r *Room) Run() {
 						pl.client.OutMessages <- messages.NewLossMessage()
 					}
 				}
-				r.close()
+				endChannel <- true
 			default:
 				r.players[m.Username].client.OutMessages <- m.Message
 			}
+		case <-endChannel:
+			return
 		}
 	}
 }
@@ -161,14 +175,6 @@ func (r *Room) nextConnection(duration int) {
 		pl.client.OutMessages <- messages.NewTurnMessage(pl.client.Username == r.currentPlayer(), duration)
 	}
 	r.waitForAction(duration)
-}
-
-func (r *Room) close() {
-	for _, pl := range r.players {
-		pl.close()
-	}
-	r.finished = true
-	r.removeMe <- true
 }
 
 func (r *Room) isFinished() bool {

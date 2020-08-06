@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -35,6 +36,7 @@ type ClientMessage struct {
 func (c *Client) ReadPump() {
 	defer func() {
 		c.Conn.Close()
+		fmt.Println("ended readpump")
 	}()
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error {
@@ -68,10 +70,12 @@ func (c *Client) WritePump() {
 			c.Conn.WriteJSON(message)
 		case <-ticker.C:
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				fmt.Println("ended writepump")
 				return
 			}
 		}
 	}
+
 }
 
 func (c *Client) Close() {
