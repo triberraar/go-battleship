@@ -60,11 +60,11 @@ func (r *Room) joinPlayer(client *cl.Client) {
 	r.aggregateMessages(client.Username)
 	if r.isFull() {
 		for _, pl := range r.players {
-			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.client.Username == r.currentPlayer(), r.gameDefinition.TurnDuration())
+			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.client.Username, pl.client.Username == r.currentPlayer(), r.gameDefinition.TurnDuration())
 		}
 		r.waitForAction(r.gameDefinition.TurnDuration())
 	} else {
-		client.OutMessages <- messages.NewAwaitingPlayersMessage()
+		client.OutMessages <- messages.NewAwaitingPlayersMessage(client.Username)
 	}
 }
 
@@ -75,7 +75,7 @@ func (r *Room) rejoinPlayer(client *cl.Client) {
 	r.players[client.Username].client = client
 	r.players[client.Username].game.Rejoin()
 	r.aggregateMessages(client.Username)
-	client.OutMessages <- messages.NewTurnMessage(r.currentPlayer() == client.Username, int(r.waitTimer.TimeRemaining().Seconds()))
+	client.OutMessages <- messages.NewTurnMessage(client.Username, r.currentPlayer() == client.Username, int(r.waitTimer.TimeRemaining().Seconds()))
 	// should also send all the state of all other players :D
 }
 
@@ -148,7 +148,7 @@ func (r *Room) listenForMessages(endChannel chan bool) {
 					if pl.client.Username == r.currentPlayer() {
 						pl.client.OutMessages <- m.Message
 					} else {
-						pl.client.OutMessages <- messages.NewLossMessage()
+						pl.client.OutMessages <- messages.NewLossMessage(pl.client.Username)
 					}
 				}
 				endChannel <- true
@@ -173,7 +173,7 @@ func (r *Room) nextConnection(duration int) {
 	r.waitTimer.timer.Stop()
 	r.currentPlayerIndex = (r.currentPlayerIndex + 1) % len(r.players)
 	for _, pl := range r.players {
-		pl.client.OutMessages <- messages.NewTurnMessage(pl.client.Username == r.currentPlayer(), duration)
+		pl.client.OutMessages <- messages.NewTurnMessage(pl.client.Username, pl.client.Username == r.currentPlayer(), duration)
 	}
 	r.waitForAction(duration)
 }

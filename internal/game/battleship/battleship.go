@@ -114,20 +114,20 @@ func (bs *Battleship) Run() {
 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
 				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
 					coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
-					bs.SendMessage(messages.NewShipDestroyedMessage(coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
-					bs.SendMessage(messages.NewTurnExtendedMessage(turnDuration))
+					bs.SendMessage(messages.NewShipDestroyedMessage(bs.username, coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
+					bs.SendMessage(messages.NewTurnExtendedMessage(bs.username, turnDuration))
 				} else {
-					bs.SendMessage(messages.NewHitMessage(fm.Coordinate))
-					bs.SendMessage(messages.NewTurnExtendedMessage(turnDuration))
+					bs.SendMessage(messages.NewHitMessage(bs.username, fm.Coordinate))
+					bs.SendMessage(messages.NewTurnExtendedMessage(bs.username, turnDuration))
 				}
 				if bs.hasVictory() {
 					bs.victory = true
-					bs.SendMessage(messages.NewVictoryMessage())
+					bs.SendMessage(messages.NewVictoryMessage(bs.username))
 				}
 			} else {
-				bs.SendMessage(messages.NewMissMessage(fm.Coordinate))
+				bs.SendMessage(messages.NewMissMessage(bs.username, fm.Coordinate))
 				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
-				bs.SendMessage(messages.NewTurnMessage(false, turnDuration))
+				bs.SendMessage(messages.NewTurnMessage(bs.username, false, turnDuration))
 			}
 		}
 	}
@@ -148,7 +148,7 @@ func NewBattleship(username string) game.Game {
 		shipSizes[i] = bs.ships[i].size
 	}
 	go bs.Run()
-	bs.SendMessage(messages.NewBoardMessage(shipSizes[:]))
+	bs.SendMessage(messages.NewBoardMessage(bs.username, shipSizes[:]))
 	return &bs
 }
 
@@ -185,7 +185,7 @@ func (bs *Battleship) NewBattleshipFromExisting(username string) game.Game {
 		shipSizes[i] = bs.ships[i].size
 	}
 	go nbs.Run()
-	nbs.SendMessage(messages.NewBoardMessage(shipSizes[:]))
+	nbs.SendMessage(messages.NewBoardMessage(nbs.username, shipSizes[:]))
 	return &nbs
 }
 
@@ -195,7 +195,7 @@ func (bs *Battleship) Rejoin() {
 	for i := 0; i < len(bs.ships); i++ {
 		shipSizes[i] = bs.ships[i].size
 		if bs.ships[i].isDestroyed() {
-			destroys = append(destroys, messages.NewShipDestroyedMessage(messages.Coordinate{bs.ships[i].x, bs.ships[i].y}, bs.ships[i].size, bs.ships[i].vertical))
+			destroys = append(destroys, messages.NewShipDestroyedMessage(bs.username, messages.Coordinate{bs.ships[i].x, bs.ships[i].y}, bs.ships[i].size, bs.ships[i].vertical))
 		}
 	}
 
@@ -204,13 +204,13 @@ func (bs *Battleship) Rejoin() {
 	for i := 0; i < len(bs.board); i++ {
 		for j := 0; j < len(bs.board[i]); j++ {
 			if bs.board[i][j].status == "fired" && bs.board[i][j].ship == nil {
-				misses = append(misses, messages.NewMissMessage(messages.Coordinate{i, j}))
+				misses = append(misses, messages.NewMissMessage(bs.username, messages.Coordinate{i, j}))
 			} else if bs.board[i][j].status == "fired" && bs.board[i][j].ship != nil {
-				hits = append(hits, messages.NewHitMessage(messages.Coordinate{i, j}))
+				hits = append(hits, messages.NewHitMessage(bs.username, messages.Coordinate{i, j}))
 			}
 		}
 	}
-	bs.SendMessage(messages.NewBoardStateMessage(hits, misses, destroys, messages.NewBoardMessage(shipSizes[:])))
+	bs.SendMessage(messages.NewBoardStateMessage(bs.username, hits, misses, destroys, messages.NewBoardMessage(bs.username, shipSizes[:])))
 }
 
 func (bs *Battleship) Close() {

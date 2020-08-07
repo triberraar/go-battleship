@@ -1,5 +1,15 @@
 <template>
-  <div :id="containerId"></div>
+  <div class="tile is-ancestor">
+    <div class="tile is-3" v-if="!gameLoading">
+      <div :id="containerId"></div>
+    </div>
+    <div class="tile is-3" v-else>
+      <b-progress />
+    </div>
+    <div class="tile is-3" v-if="!gameLoading">
+      <b-table :data="battleshipModule.statistics" :columns="columns" />
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -14,6 +24,7 @@ export default class Battleships extends Vue {
   battleshipModule = getModule(Battleship, this.$store)
 
   gameInstance: Phaser.Game
+  gameLoading = true
 
   containerId = 'battleshipsContainer'
 
@@ -28,6 +39,7 @@ export default class Battleships extends Vue {
       return
     }
     const game = await import(/* webpackChunkName: "game" */ '@/games/battleships/battleships')
+    this.gameLoading = false
     this.$nextTick(() => {
       this.gameInstance = game.launchBattleships(this.containerId)
     })
@@ -40,7 +52,7 @@ export default class Battleships extends Vue {
   }
 
   @Watch('battleshipModule.connected')
-  connectionChanged(n: string, o: string) {
+  connectionChanged(n: string) {
     if (n === 'RECONNECTING') {
       this.$buefy.toast.open({
         message: 'Disconnected, trying to reconnect',
@@ -58,5 +70,39 @@ export default class Battleships extends Vue {
       })
     }
   }
+
+  tddd = [
+    {
+      username: 'sdf',
+      hits: 1,
+      misses: 10,
+      destroyed: 5
+    },
+    {
+      username: 'sdsdff',
+      hits: 1,
+      misses: 10,
+      destroyed: 5
+    }
+  ]
+
+  columns = [
+    {
+      field: 'username',
+      label: 'username'
+    },
+    {
+      field: 'hits',
+      label: 'Hits'
+    },
+    {
+      field: 'misses',
+      label: 'Misses'
+    },
+    {
+      field: 'destroyed',
+      label: 'Ships destroyed'
+    }
+  ]
 }
 </script>

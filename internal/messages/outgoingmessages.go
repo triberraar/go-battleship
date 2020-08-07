@@ -7,9 +7,9 @@ type HitMessage struct {
 }
 
 // NewHitMessage constructor function
-func NewHitMessage(coordinate Coordinate) HitMessage {
+func NewHitMessage(username string, coordinate Coordinate) HitMessage {
 	return HitMessage{
-		BaseMessage: BaseMessage{Type: "HIT"},
+		BaseMessage: BaseMessage{Username: username, Type: "HIT"},
 		Coordinate:  coordinate,
 	}
 }
@@ -21,9 +21,9 @@ type MissMessage struct {
 }
 
 // NewMissMessage constructor function
-func NewMissMessage(coordinate Coordinate) MissMessage {
+func NewMissMessage(username string, coordinate Coordinate) MissMessage {
 	return MissMessage{
-		BaseMessage: BaseMessage{Type: "MISS"},
+		BaseMessage: BaseMessage{Username: username, Type: "MISS"},
 		Coordinate:  coordinate,
 	}
 }
@@ -35,9 +35,9 @@ type ShipDestroyedMessage struct {
 	Vertical   bool       `json:"vertical"`
 }
 
-func NewShipDestroyedMessage(coordinate Coordinate, shipSize int, vertical bool) ShipDestroyedMessage {
+func NewShipDestroyedMessage(username string, coordinate Coordinate, shipSize int, vertical bool) ShipDestroyedMessage {
 	return ShipDestroyedMessage{
-		BaseMessage: BaseMessage{Type: "SHIP_DESTROYED"},
+		BaseMessage: BaseMessage{Username: username, Type: "SHIP_DESTROYED"},
 		Coordinate:  coordinate,
 		ShipSize:    shipSize,
 		Vertical:    vertical,
@@ -48,9 +48,9 @@ type VictoryMessage struct {
 	BaseMessage
 }
 
-func NewVictoryMessage() VictoryMessage {
+func NewVictoryMessage(username string) VictoryMessage {
 	return VictoryMessage{
-		BaseMessage{Type: "VICTORY"},
+		BaseMessage{Username: username, Type: "VICTORY"},
 	}
 }
 
@@ -58,9 +58,9 @@ type LossMessage struct {
 	BaseMessage
 }
 
-func NewLossMessage() LossMessage {
+func NewLossMessage(username string) LossMessage {
 	return LossMessage{
-		BaseMessage{Type: "LOSS"},
+		BaseMessage{Username: username, Type: "LOSS"},
 	}
 }
 
@@ -69,9 +69,9 @@ type BoardMessage struct {
 	ShipSizes []int `json:"shipSizes"`
 }
 
-func NewBoardMessage(shipSizes []int) BoardMessage {
+func NewBoardMessage(username string, shipSizes []int) BoardMessage {
 	return BoardMessage{
-		BaseMessage: BaseMessage{Type: "BOARD"},
+		BaseMessage: BaseMessage{Username: username, Type: "BOARD"},
 		ShipSizes:   shipSizes,
 	}
 }
@@ -80,9 +80,9 @@ type awaitingPlayersMessage struct {
 	BaseMessage
 }
 
-func NewAwaitingPlayersMessage() awaitingPlayersMessage {
+func NewAwaitingPlayersMessage(username string) awaitingPlayersMessage {
 	return awaitingPlayersMessage{
-		BaseMessage{Type: "AWAITING_PLAYERS"},
+		BaseMessage{Username: username, Type: "AWAITING_PLAYERS"},
 	}
 }
 
@@ -91,9 +91,9 @@ type gameStartedMessage struct {
 	TurnMessage
 }
 
-func NewGameStartedMessage(turn bool, duration int) gameStartedMessage {
+func NewGameStartedMessage(username string, turn bool, duration int) gameStartedMessage {
 	return gameStartedMessage{
-		BaseMessage: BaseMessage{Type: "GAME_STARTED"},
+		BaseMessage: BaseMessage{Username: username, Type: "GAME_STARTED"},
 		TurnMessage: TurnMessage{Turn: turn, Duration: duration},
 	}
 }
@@ -104,9 +104,9 @@ type TurnMessage struct {
 	Duration int  `json:"duration"`
 }
 
-func NewTurnMessage(turn bool, duration int) TurnMessage {
+func NewTurnMessage(username string, turn bool, duration int) TurnMessage {
 	return TurnMessage{
-		BaseMessage: BaseMessage{Type: "TURN"},
+		BaseMessage: BaseMessage{Username: username, Type: "TURN"},
 		Turn:        turn,
 		Duration:    duration,
 	}
@@ -118,9 +118,9 @@ type TurnExtendedMessage struct {
 	Duration int  `json:"duration"`
 }
 
-func NewTurnExtendedMessage(duration int) TurnExtendedMessage {
+func NewTurnExtendedMessage(username string, duration int) TurnExtendedMessage {
 	return TurnExtendedMessage{
-		BaseMessage: BaseMessage{Type: "TURN_EXTENDED"},
+		BaseMessage: BaseMessage{Username: username, Type: "TURN_EXTENDED"},
 		Turn:        true,
 		Duration:    duration,
 	}
@@ -134,9 +134,9 @@ type boardStateMessage struct {
 	Board   BoardMessage           `json:"board"`
 }
 
-func NewBoardStateMessage(hits []HitMessage, misses []MissMessage, destroys []ShipDestroyedMessage, board BoardMessage) boardStateMessage {
+func NewBoardStateMessage(username string, hits []HitMessage, misses []MissMessage, destroys []ShipDestroyedMessage, board BoardMessage) boardStateMessage {
 	return boardStateMessage{
-		BaseMessage: BaseMessage{Type: "BOARD_STATE"},
+		BaseMessage: BaseMessage{Username: username, Type: "BOARD_STATE"},
 		Board:       board,
 		Hits:        hits,
 		Misses:      misses,

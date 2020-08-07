@@ -9,42 +9,58 @@ interface Coordinate {
 }
 
 interface HitMessage {
+  username: string
   coordinate: Coordinate
 }
 
 interface MissMessage {
+  username: string
   coordinate: Coordinate
 }
 
 interface ShipDestroyedMessage {
+  username: string
   coordinate: Coordinate
   shipSize: number
   vertical: boolean
 }
 
 interface BoardMessage {
+  username: string
   shipSizes: number[]
 }
 
 interface GameStartedMessage {
+  username: string
   turn: boolean
   duration: number
 }
 
 interface TurnMessage {
+  username: string
   turn: boolean
   duration: number
 }
 
 interface TurnExtendedMessage {
+  username: string
   duration: number
 }
 
 interface BoardStateMessage {
+  username: string
   board: BoardMessage
   destroys: ShipDestroyedMessage[]
   hits: HitMessage[]
   misses: MissMessage[]
+}
+
+interface VictoryMessage {
+  username: string
+}
+
+interface LossMessage {
+  username: string
 }
 
 export default class CommunicationManager {
@@ -138,11 +154,11 @@ export default class CommunicationManager {
         break
       }
       case 'VICTORY': {
-        this.onVictory()
+        this.onVictory(m)
         break
       }
       case 'LOSS': {
-        this.onLoss()
+        this.onLoss(m)
         break
       }
       case 'BOARD': {
@@ -185,66 +201,85 @@ export default class CommunicationManager {
   }
 
   play() {
-    console.log(`player ${UserStore.state.username}`)
     this.send(JSON.stringify({ type: 'PLAY', username: UserStore.state.username }))
   }
 
   onHit(m: HitMessage) {
-    this.boardManager.hit(m.coordinate.x, m.coordinate.y)
-    Store.commit(UserStore.state.username, 'HIT')
+    if (m.username === UserStore.state.username) {
+      this.boardManager.hit(m.coordinate.x, m.coordinate.y)
+      Store.commit('HIT', UserStore.state.username)
+    }
   }
 
   onMiss(m: MissMessage) {
-    this.boardManager.miss(m.coordinate.x, m.coordinate.y)
-    Store.commit(UserStore.state.username, 'MISS')
+    if (m.username === UserStore.state.username) {
+      this.boardManager.miss(m.coordinate.x, m.coordinate.y)
+      Store.commit('MISS', UserStore.state.username)
+    }
   }
 
   onShipDestroyed(m: ShipDestroyedMessage) {
-    this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
-    Store.commit(UserStore.state.username, 'SHIPDESTROYED')
+    if (m.username === UserStore.state.username) {
+      this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
+      Store.commit('SHIPDESTROYED', UserStore.state.username)
+    }
   }
 
-  onVictory() {
-    this.boardManager.victory()
-    this.feedbackText.setText('You win')
-    this.close()
+  onVictory(m: VictoryMessage) {
+    if (m.username === UserStore.state.username) {
+      this.boardManager.victory()
+      this.feedbackText.setText('You win')
+      this.close()
+    }
   }
 
-  onLoss() {
-    this.boardManager.loss()
-    this.feedbackText.setText('The other dummy won, loser')
-    this.close()
+  onLoss(m: LossMessage) {
+    if (m.username === UserStore.state.username) {
+      this.boardManager.loss()
+      this.feedbackText.setText('The other dummy won, loser')
+      this.close()
+    }
   }
 
   onBoard(m: BoardMessage) {
-    this.boardManager.ships(m.shipSizes)
+    if (m.username === UserStore.state.username) {
+      this.boardManager.ships(m.shipSizes)
+    }
   }
 
   onGameStarted(m: GameStartedMessage) {
-    if (m.turn) {
-      this.feedbackText.setCountDownText('Your turn', m.duration)
-    } else {
-      this.feedbackText.setText('Waiting for the other dummy')
+    if (m.username === UserStore.state.username) {
+      if (m.turn) {
+        this.feedbackText.setCountDownText('Your turn', m.duration)
+      } else {
+        this.feedbackText.setText('Waiting for the other dummy')
+      }
     }
   }
 
   onTurn(m: TurnMessage) {
-    if (m.turn) {
-      this.feedbackText.setCountDownText('Your turn', m.duration)
-    } else {
-      this.feedbackText.setText('Waiting for the other dummy')
+    if (m.username === UserStore.state.username) {
+      if (m.turn) {
+        this.feedbackText.setCountDownText('Your turn', m.duration)
+      } else {
+        this.feedbackText.setText('Waiting for the other dummy')
+      }
     }
   }
 
   onTurnExtended(m: TurnExtendedMessage) {
-    this.feedbackText.setCountDownText('Your turn', m.duration)
+    if (m.username === UserStore.state.username) {
+      this.feedbackText.setCountDownText('Your turn', m.duration)
+    }
   }
 
   onBoardState(m: BoardStateMessage) {
-    Store.commit(UserStore.state.username, 'RESETSTATS')
-    this.boardManager.ships(m.board.shipSizes)
-    m.destroys.forEach(d => this.onShipDestroyed(d))
-    m.hits.forEach(h => this.onHit(h))
-    m.misses.forEach(ms => this.onMiss(ms))
+    if (m.username === UserStore.state.username) {
+      Store.commit('RESETSTATS', UserStore.state.username)
+      this.boardManager.ships(m.board.shipSizes)
+      m.destroys.forEach(d => this.onShipDestroyed(d))
+      m.hits.forEach(h => this.onHit(h))
+      m.misses.forEach(ms => this.onMiss(ms))
+    }
   }
 }
