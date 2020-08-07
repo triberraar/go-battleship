@@ -34,6 +34,7 @@ interface GameStartedMessage {
   username: string
   turn: boolean
   duration: number
+  usernames: string[]
 }
 
 interface TurnMessage {
@@ -60,6 +61,10 @@ interface VictoryMessage {
 }
 
 interface LossMessage {
+  username: string
+}
+
+interface OpponentDestroyedShip {
   username: string
 }
 
@@ -181,6 +186,10 @@ export default class CommunicationManager {
         this.onBoardState(m)
         break
       }
+      case 'OPPONENT_DESTROYED_SHIP': {
+        this.onOpponentDestroyedShip(m)
+        break
+      }
       default: {
         console.error(`unknowns message ${m.type}`)
         break
@@ -207,22 +216,26 @@ export default class CommunicationManager {
   onHit(m: HitMessage) {
     if (m.username === UserStore.state.username) {
       this.boardManager.hit(m.coordinate.x, m.coordinate.y)
-      Store.commit('HIT', UserStore.state.username)
     }
+    Store.commit('HIT', m.username)
   }
 
   onMiss(m: MissMessage) {
     if (m.username === UserStore.state.username) {
       this.boardManager.miss(m.coordinate.x, m.coordinate.y)
-      Store.commit('MISS', UserStore.state.username)
     }
+    Store.commit('MISS', m.username)
   }
 
   onShipDestroyed(m: ShipDestroyedMessage) {
     if (m.username === UserStore.state.username) {
       this.boardManager.destoryShip(m.coordinate.x, m.coordinate.y, m.shipSize, m.vertical)
-      Store.commit('SHIPDESTROYED', UserStore.state.username)
     }
+    Store.commit('SHIPDESTROYED', m.username)
+  }
+
+  onOpponentDestroyedShip(m: OpponentDestroyedShip) {
+    Store.commit('SHIPDESTROYED', m.username)
   }
 
   onVictory(m: VictoryMessage) {
@@ -255,6 +268,7 @@ export default class CommunicationManager {
         this.feedbackText.setText('Waiting for the other dummy')
       }
     }
+    Store.commit('RESETSTATS', m.usernames)
   }
 
   onTurn(m: TurnMessage) {
@@ -275,7 +289,6 @@ export default class CommunicationManager {
 
   onBoardState(m: BoardStateMessage) {
     if (m.username === UserStore.state.username) {
-      Store.commit('RESETSTATS', UserStore.state.username)
       this.boardManager.ships(m.board.shipSizes)
       m.destroys.forEach(d => this.onShipDestroyed(d))
       m.hits.forEach(h => this.onHit(h))

@@ -1,13 +1,13 @@
 <template>
   <div class="tile is-ancestor">
     <div class="tile is-3" v-if="!gameLoading">
+      <b-table :data="battleshipModule.statistics" :columns="columns" />
+    </div>
+    <div class="tile is-3" v-if="!gameLoading">
       <div :id="containerId"></div>
     </div>
     <div class="tile is-3" v-else>
       <b-progress />
-    </div>
-    <div class="tile is-3" v-if="!gameLoading">
-      <b-table :data="battleshipModule.statistics" :columns="columns" />
     </div>
   </div>
 </template>
@@ -71,25 +71,10 @@ export default class Battleships extends Vue {
     }
   }
 
-  tddd = [
-    {
-      username: 'sdf',
-      hits: 1,
-      misses: 10,
-      destroyed: 5
-    },
-    {
-      username: 'sdsdff',
-      hits: 1,
-      misses: 10,
-      destroyed: 5
-    }
-  ]
-
   columns = [
     {
       field: 'username',
-      label: 'username'
+      label: 'Username'
     },
     {
       field: 'hits',

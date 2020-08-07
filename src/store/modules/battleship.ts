@@ -86,13 +86,11 @@ class Battleship extends VuexModule {
   }
 
   @Mutation
-  public RESETSTATS(username: string) {
-    let stat = this.statistics.find(it => it.username === username)
-    if (!stat) {
-      stat = new Statistics(username)
-      this.statistics.push(stat)
-    }
-    stat.reset()
+  public RESETSTATS(usernames: string[]) {
+    this.statistics = []
+    usernames.forEach(it => {
+      this.statistics.push(new Statistics(it))
+    })
   }
 }
 

@@ -44,6 +44,16 @@ func NewShipDestroyedMessage(username string, coordinate Coordinate, shipSize in
 	}
 }
 
+type OpponentDestroyedShip struct {
+	BaseMessage
+}
+
+func NewOpponentDestroyedShipMessage(username string) OpponentDestroyedShip {
+	return OpponentDestroyedShip{
+		BaseMessage: BaseMessage{Username: username, Type: "OPPONENT_DESTROYED_SHIP"},
+	}
+}
+
 type VictoryMessage struct {
 	BaseMessage
 }
@@ -89,12 +99,14 @@ func NewAwaitingPlayersMessage(username string) awaitingPlayersMessage {
 type gameStartedMessage struct {
 	BaseMessage
 	TurnMessage
+	Usernames []string `json:"usernames"`
 }
 
-func NewGameStartedMessage(username string, turn bool, duration int) gameStartedMessage {
+func NewGameStartedMessage(username string, turn bool, duration int, usernames []string) gameStartedMessage {
 	return gameStartedMessage{
 		BaseMessage: BaseMessage{Username: username, Type: "GAME_STARTED"},
 		TurnMessage: TurnMessage{Turn: turn, Duration: duration},
+		Usernames:   usernames,
 	}
 }
 

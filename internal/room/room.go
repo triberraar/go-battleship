@@ -60,7 +60,7 @@ func (r *Room) joinPlayer(client *cl.Client) {
 	r.aggregateMessages(client.Username)
 	if r.isFull() {
 		for _, pl := range r.players {
-			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.client.Username, pl.client.Username == r.currentPlayer(), r.gameDefinition.TurnDuration())
+			pl.client.OutMessages <- messages.NewGameStartedMessage(pl.client.Username, pl.client.Username == r.currentPlayer(), r.gameDefinition.TurnDuration(), r.playersInOrder)
 		}
 		r.waitForAction(r.gameDefinition.TurnDuration())
 	} else {
@@ -153,7 +153,15 @@ func (r *Room) listenForMessages(endChannel chan bool) {
 				}
 				endChannel <- true
 			default:
-				r.players[m.Username].client.OutMessages <- m.Message
+				for _, pl := range r.players {
+					_, ok := m.Message.(messages.ShipDestroyedMessage) // do special
+					if ok && pl.client.Username != m.Username {
+						pl.client.OutMessages <- messages.NewOpponentDestroyedShipMessage(m.Username)
+					} else {
+						pl.client.OutMessages <- m.Message
+					}
+
+				}
 			}
 		case <-endChannel:
 			return
