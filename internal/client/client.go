@@ -25,6 +25,7 @@ type Client struct {
 	Conn        *websocket.Conn
 	OutMessages chan interface{}
 	InMessages  chan ClientMessage
+	InMessages2 chan []byte
 	Username    string
 }
 
@@ -56,7 +57,8 @@ func (c *Client) ReadPump() {
 		json.Unmarshal(message, &bm)
 		if bm.Type == "PING" {
 		} else {
-			c.InMessages <- ClientMessage{c.Username, message}
+			// c.InMessages <- ClientMessage{c.Username, message}
+			c.InMessages2 <- message
 		}
 
 	}

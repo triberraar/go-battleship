@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/triberraar/go-battleship/internal/client"
-	"github.com/triberraar/go-battleship/internal/room"
+	"github.com/triberraar/go-battleship/internal/match"
 )
 
 var upgrader = websocket.Upgrader{
@@ -15,15 +15,15 @@ var upgrader = websocket.Upgrader{
 	}} // use default options
 
 // Battleship the handlers for the battleship socket stuff
-func Battleship(rm *room.RoomManager, w http.ResponseWriter, r *http.Request) {
+func Battleship(mm *match.Matchmaker, w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
 	}
-	client := &client.Client{Conn: c, OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10), Username: r.URL.Query()["username"][0]}
+	client := &client.Client{Conn: c, OutMessages: make(chan interface{}, 10), InMessages: make(chan client.ClientMessage, 10), InMessages2: make(chan []byte, 10), Username: r.URL.Query()["username"][0]}
 
-	rm.JoinRoom(client, "battleships")
+	mm.Play(client, "battleships")
 
 	go client.ReadPump()
 	go client.WritePump()

@@ -2,12 +2,10 @@ package battleship
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"math/rand"
 	"time"
 
-	"github.com/triberraar/go-battleship/internal/game"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
 
@@ -15,25 +13,25 @@ const (
 	turnDuration = 20
 )
 
-type BattleshipGameCreator struct {
-}
+// type BattleshipGameCreator struct {
+// }
 
-func (bgc BattleshipGameCreator) Game(username string) game.Game {
-	return NewBattleship(username)
-}
+// func (bgc BattleshipGameCreator) Game(username string) game.Game {
+// 	return NewBattleship(username)
+// }
 
-func (bgc BattleshipGameCreator) GameDefinition(gameName string) game.GameDefinition {
-	return NewGameDefinition(gameName)
-}
+// func (bgc BattleshipGameCreator) GameDefinition(gameName string) game.GameDefinition {
+// 	return NewGameDefinition(gameName)
+// }
 
-func (bgc BattleshipGameCreator) FromExisting(username string, game game.Game) (game.Game, error) {
-	bs, ok := game.(*Battleship)
-	if ok {
-		return bs.NewBattleshipFromExisting(username), nil
-	}
-	return nil, errors.New("unknown game")
+// func (bgc BattleshipGameCreator) FromExisting(username string, game game.Game) (game.Game, error) {
+// 	bs, ok := game.(*Battleship)
+// 	if ok {
+// 		return bs.NewBattleshipFromExisting(username), nil
+// 	}
+// 	return nil, errors.New("unknown game")
 
-}
+// }
 
 type ship struct {
 	x        int
@@ -66,26 +64,27 @@ func (t *tile) hasShip() bool {
 	return t.ship != nil
 }
 
-type BattleshipDefinition struct {
-	gameName string
-}
+// type BattleshipDefinition struct {
+// 	gameName string
+// }
 
-func (bs *BattleshipDefinition) TurnDuration() int {
-	return turnDuration
-}
+// func (bs *BattleshipDefinition) TurnDuration() int {
+// 	return turnDuration
+// }
 
-func (bs *BattleshipDefinition) GameName() string {
-	return bs.gameName
-}
+// func (bs *BattleshipDefinition) GameName() string {
+// 	return bs.gameName
+// }
 
-func NewGameDefinition(gameName string) game.GameDefinition {
-	return &BattleshipDefinition{gameName}
-}
+// func NewGameDefinition(gameName string) game.GameDefinition {
+// 	return &BattleshipDefinition{gameName}
+// }
 
 type Battleship struct {
-	inMessages  chan []byte
-	outMessages chan messages.GameMessage
-	username    string
+	inMessages chan []byte
+	// outMessages  chan messages.GameMessage
+	OutMessages2 chan interface{}
+	username     string
 
 	board     [][]tile
 	dimension int
@@ -94,71 +93,78 @@ type Battleship struct {
 }
 
 func (bs *Battleship) SendMessage(message interface{}) {
-	bs.outMessages <- messages.GameMessage{bs.username, message}
+	// bs.outMessages <- messages.GameMessage{bs.username, message}
+	bs.OutMessages2 <- message
 }
 
-func (bs *Battleship) Run() {
+// func (bs *Battleship) Run() {
 
-	for message := range bs.inMessages {
-		bm := messages.BaseMessage{}
-		json.Unmarshal(message, &bm)
-		if bm.Type == "FIRE" && !bs.victory {
-			fm := messages.FireMessage{}
-			json.Unmarshal(message, &fm)
-			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
-				continue
-			}
-			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
+// 	for message := range bs.inMessages {
 
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
-				if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
-					coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
-					bs.SendMessage(messages.NewShipDestroyedMessage(bs.username, coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
-					bs.SendMessage(messages.NewTurnExtendedMessage(bs.username, turnDuration))
-				} else {
-					bs.SendMessage(messages.NewHitMessage(bs.username, fm.Coordinate))
-					bs.SendMessage(messages.NewTurnExtendedMessage(bs.username, turnDuration))
-				}
-				if bs.hasVictory() {
-					bs.victory = true
-					bs.SendMessage(messages.NewVictoryMessage(bs.username))
-				}
+// 		bs.Process(message)
+
+// 	}
+// 	log.Printf("game for %s has ended", bs.username)
+// }
+
+func (bs *Battleship) Process(message []byte) {
+
+	bm := messages.BaseMessage{}
+	json.Unmarshal(message, &bm)
+	if bm.Type == "FIRE" && !bs.victory {
+		fm := messages.FireMessage{}
+		json.Unmarshal(message, &fm)
+		if bs.board[fm.Coordinate.X][fm.Coordinate.Y].status == "fired" {
+			return
+		}
+		if bs.board[fm.Coordinate.X][fm.Coordinate.Y].hasShip() {
+
+			bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+			bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.hit()
+			if bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.isDestroyed() {
+				coordinate := messages.Coordinate{X: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.x, Y: bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.y}
+				bs.SendMessage(messages.NewShipDestroyedMessage(bs.username, coordinate, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.size, bs.board[fm.Coordinate.X][fm.Coordinate.Y].ship.vertical))
+				bs.SendMessage(messages.NewTurnExtendedMessage(bs.username, turnDuration))
 			} else {
-				bs.SendMessage(messages.NewMissMessage(bs.username, fm.Coordinate))
-				bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
-				bs.SendMessage(messages.NewTurnMessage(bs.username, false, turnDuration))
+				bs.SendMessage(messages.NewHitMessage(bs.username, fm.Coordinate))
+				bs.SendMessage(messages.NewTurnExtendedMessage(bs.username, turnDuration))
 			}
+			if bs.hasVictory() {
+				bs.victory = true
+				bs.SendMessage(messages.NewVictoryMessage(bs.username))
+			}
+		} else {
+			bs.SendMessage(messages.NewMissMessage(bs.username, fm.Coordinate))
+			bs.board[fm.Coordinate.X][fm.Coordinate.Y].status = "fired"
+			bs.SendMessage(messages.NewTurnMessage(bs.username, false, turnDuration))
 		}
 	}
-	log.Printf("game for %s has ended", bs.username)
 }
 
-func NewBattleship(username string) game.Game {
+func NewBattleship(username string) *Battleship {
 	bs := Battleship{
-		dimension:   10,
-		victory:     false,
-		inMessages:  make(chan []byte, 10),
-		outMessages: make(chan messages.GameMessage, 10),
-		username:    username,
+		dimension:    10,
+		victory:      false,
+		inMessages:   make(chan []byte, 10),
+		OutMessages2: make(chan interface{}, 10),
+		username:     username,
 	}
 	bs.newBoard()
 	var shipSizes [len(bs.ships)]int
 	for i := 0; i < len(bs.ships); i++ {
 		shipSizes[i] = bs.ships[i].size
 	}
-	go bs.Run()
 	bs.SendMessage(messages.NewBoardMessage(bs.username, shipSizes[:]))
 	return &bs
 }
 
-func (bs *Battleship) NewBattleshipFromExisting(username string) game.Game {
+func (bs *Battleship) NewBattleshipFromExisting(username string) *Battleship {
 	nbs := Battleship{
-		dimension:   bs.dimension,
-		victory:     false,
-		inMessages:  make(chan []byte, 10),
-		outMessages: make(chan messages.GameMessage, 10),
-		username:    username,
+		dimension:    bs.dimension,
+		victory:      false,
+		inMessages:   make(chan []byte, 10),
+		OutMessages2: make(chan interface{}, 10),
+		username:     username,
 	}
 
 	board := make([][]tile, len(bs.board))
@@ -184,7 +190,6 @@ func (bs *Battleship) NewBattleshipFromExisting(username string) game.Game {
 	for i := 0; i < len(bs.ships); i++ {
 		shipSizes[i] = bs.ships[i].size
 	}
-	go nbs.Run()
 	nbs.SendMessage(messages.NewBoardMessage(nbs.username, shipSizes[:]))
 	return &nbs
 }
@@ -213,18 +218,18 @@ func (bs *Battleship) Rejoin() {
 	bs.SendMessage(messages.NewBoardStateMessage(bs.username, hits, misses, destroys, messages.NewBoardMessage(bs.username, shipSizes[:])))
 }
 
-func (bs *Battleship) Close() {
-	close(bs.inMessages)
-	close(bs.outMessages)
-}
+// func (bs *Battleship) Close() {
+// 	close(bs.inMessages)
+// 	close(bs.outMessages)
+// }
 
-func (bs *Battleship) InMessages() chan []byte {
-	return bs.inMessages
-}
+// func (bs *Battleship) InMessages() chan []byte {
+// 	return bs.inMessages
+// }
 
-func (bs *Battleship) OutMessages() chan messages.GameMessage {
-	return bs.outMessages
-}
+// func (bs *Battleship) OutMessages() chan messages.GameMessage {
+// 	return bs.outMessages
+// }
 
 func (b *Battleship) newBoard() {
 	b.board = make([][]tile, b.dimension)

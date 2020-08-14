@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	bsHandlers "github.com/triberraar/go-battleship/internal/handlers"
-	"github.com/triberraar/go-battleship/internal/room"
+	"github.com/triberraar/go-battleship/internal/match"
 )
 
 var addr = flag.String("addr", "localhost:10002", "http service address")
@@ -22,9 +22,9 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 	router := mux.NewRouter()
-	rm := room.NewRoomManager()
+	mm := match.NewMatchmaker([]string{"battleships"})
 	router.HandleFunc("/battleship", func(w http.ResponseWriter, r *http.Request) {
-		bsHandlers.Battleship(rm, w, r)
+		bsHandlers.Battleship(mm, w, r)
 	})
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("dist/"))))
 	log.Printf("Server listening on %s for shure", port)
