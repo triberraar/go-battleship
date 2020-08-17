@@ -5,7 +5,7 @@ websocket reconnect
 
 enemy hit stuff message
 
-- add statisctics on reconnect
+- add statisctics on reconnect for other player
 - reset stats on new game
 
 result screen

@@ -13,6 +13,7 @@ type Match interface {
 	Join(client *client.Client)
 	Rejoin(client *client.Client)
 	GetID() uuid.UUID
+	GetRemoveChannel() chan bool
 }
 
 func NewMatch(gameName string) (Match, error) {

@@ -16,12 +16,16 @@ type BattleshipMatch struct {
 	clients     map[string]*client.Client
 	turnDecider *turndecider.TurnDecider
 
-	removeMe chan bool
+	RemoveMe chan bool
 }
 
 func NewBattleshipMatch(maxPlayers int) *BattleshipMatch {
 	return &BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers), make(chan bool)}
 
+}
+
+func (bm BattleshipMatch) GetRemoveChannel() chan bool {
+	return bm.RemoveMe
 }
 
 func (bm BattleshipMatch) ShouldRejoin(username string) bool {
@@ -78,6 +82,7 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 			for _, bs := range bm.battleships {
 				close(bs.OutMessages)
 			}
+			bm.RemoveMe <- true
 		case messages.ShipDestroyedMessage:
 			for _, c := range bm.clients {
 				if bm.turnDecider.IsCurrentPlayer(c.Username) {
@@ -96,7 +101,6 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 		}
 	}
 	log.Printf("stopped processing game messages for %s", username)
-	bm.removeMe <- true
 }
 
 func (bm BattleshipMatch) Rejoin(client *client.Client) {
