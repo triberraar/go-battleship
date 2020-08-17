@@ -1,12 +1,10 @@
 package messages
 
-// HitMessage send to player when he hits stuff
 type HitMessage struct {
 	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 }
 
-// NewHitMessage constructor function
 func NewHitMessage(username string, coordinate Coordinate) HitMessage {
 	return HitMessage{
 		BaseMessage: BaseMessage{Username: username, Type: "HIT"},
@@ -14,13 +12,11 @@ func NewHitMessage(username string, coordinate Coordinate) HitMessage {
 	}
 }
 
-// MissMessage send to player when he misses stuff
 type MissMessage struct {
 	BaseMessage
 	Coordinate Coordinate `json:"coordinate"`
 }
 
-// NewMissMessage constructor function
 func NewMissMessage(username string, coordinate Coordinate) MissMessage {
 	return MissMessage{
 		BaseMessage: BaseMessage{Username: username, Type: "MISS"},

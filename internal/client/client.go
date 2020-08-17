@@ -4,17 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/triberraar/go-battleship/internal/messages"
 )
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	}} // use default options
 
 const (
 	pongWait   = 60 * time.Second
@@ -24,8 +18,7 @@ const (
 type Client struct {
 	Conn        *websocket.Conn
 	OutMessages chan interface{}
-	InMessages  chan ClientMessage
-	InMessages2 chan []byte
+	InMessages  chan []byte
 	Username    string
 }
 
@@ -57,8 +50,7 @@ func (c *Client) ReadPump() {
 		json.Unmarshal(message, &bm)
 		if bm.Type == "PING" {
 		} else {
-			// c.InMessages <- ClientMessage{c.Username, message}
-			c.InMessages2 <- message
+			c.InMessages <- message
 		}
 
 	}

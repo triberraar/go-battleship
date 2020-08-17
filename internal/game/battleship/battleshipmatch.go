@@ -2,11 +2,11 @@ package battleship
 
 import (
 	"log"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/triberraar/go-battleship/internal/client"
 	"github.com/triberraar/go-battleship/internal/messages"
+	"github.com/triberraar/go-battleship/internal/turndecider"
 )
 
 type BattleshipMatch struct {
@@ -14,26 +14,13 @@ type BattleshipMatch struct {
 
 	battleships map[string]*Battleship
 	clients     map[string]*client.Client
-
-	maxPlayers         int
-	currentPlayerIndex int
-	playersInOrder     []string
-	waitTimer          *SecondsTimer
+	turnDecider *turndecider.TurnDecider
 
 	removeMe chan bool
 }
 
-type SecondsTimer struct {
-	timer *time.Timer
-	end   time.Time
-}
-
-func (s *SecondsTimer) TimeRemaining() time.Duration {
-	return s.end.Sub(time.Now())
-}
-
 func NewBattleshipMatch(maxPlayers int) *BattleshipMatch {
-	return &BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), maxPlayers, 0, []string{}, nil, make(chan bool)}
+	return &BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers), make(chan bool)}
 
 }
 
@@ -43,66 +30,65 @@ func (bm BattleshipMatch) ShouldRejoin(username string) bool {
 
 func (bm *BattleshipMatch) Join(client *client.Client) {
 	log.Println("joining")
-	bm.playersInOrder = append(bm.playersInOrder, client.Username)
+	bm.turnDecider.AddPlayer(client)
 	if len(bm.battleships) == 0 {
 		game := NewBattleship(client.Username)
 		bm.battleships[client.Username] = game
 		bm.clients[client.Username] = client
 	} else {
-		game := bm.battleships[bm.currentPlayer()].NewBattleshipFromExisting(client.Username)
+		game := bm.battleships[bm.turnDecider.CurrentPlayer()].NewBattleshipFromExisting(client.Username)
 		bm.battleships[client.Username] = game
 		bm.clients[client.Username] = client
 	}
 
-	if bm.allReady() {
+	if bm.turnDecider.IsFull() {
 		for _, c := range bm.clients {
-			c.OutMessages <- messages.NewGameStartedMessage(c.Username, c.Username == bm.currentPlayer(), turnDuration, bm.playersInOrder)
+			c.OutMessages <- messages.NewGameStartedMessage(c.Username, bm.turnDecider.IsCurrentPlayer(c.Username), turnDuration, bm.turnDecider.Players())
 		}
-		bm.waitForAction(turnDuration)
+		bm.turnDecider.Start(turnDuration)
 	} else {
 		client.OutMessages <- messages.NewAwaitingPlayersMessage(client.Username)
 	}
 
 	go func(c chan []byte) {
 		for m := range c {
-			if bm.currentPlayer() == client.Username {
+			if bm.turnDecider.IsCurrentPlayer(client.Username) {
 				bm.battleships[client.Username].Process(m)
 			}
 		}
 		log.Printf("reading inmessages ended for %s", client.Username)
 
-	}(bm.clients[client.Username].InMessages2)
-	go bm.processGameMessages(bm.battleships[client.Username].OutMessages2, client.Username)
+	}(bm.clients[client.Username].InMessages)
+	go bm.processGameMessages(bm.battleships[client.Username].OutMessages, client.Username)
 }
 
 func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username string) {
 	for m := range c {
 		switch cm := m.(type) {
 		case messages.TurnMessage:
-			bm.nextConnection(cm.Duration)
+			bm.turnDecider.NextTurn(cm.Duration)
 		case messages.VictoryMessage:
 			for _, c := range bm.clients {
-				if c.Username == bm.currentPlayer() {
-					log.Printf("forwarding victory")
+				if bm.turnDecider.IsCurrentPlayer(c.Username) {
 					c.OutMessages <- m
-					log.Printf("done forwarding victory")
 				} else {
-					log.Printf("sending loss")
 					c.OutMessages <- messages.NewLossMessage(c.Username)
-					log.Printf("done sending loss")
 				}
 			}
 			for _, bs := range bm.battleships {
-				close(bs.OutMessages2)
+				close(bs.OutMessages)
 			}
 		case messages.ShipDestroyedMessage:
 			for _, c := range bm.clients {
-				if c.Username == bm.currentPlayer() {
+				if bm.turnDecider.IsCurrentPlayer(c.Username) {
 					c.OutMessages <- m
 				} else {
 					c.OutMessages <- messages.NewOpponentDestroyedShipMessage(cm.Username)
 				}
 			}
+		case messages.TurnExtendedMessage:
+			bm.turnDecider.ExtendTurn(turnDuration)
+			bm.clients[cm.Username].OutMessages <- m
 		default:
 			for _, c := range bm.clients {
 				c.OutMessages <- m
@@ -118,35 +104,7 @@ func (bm BattleshipMatch) Rejoin(client *client.Client) {
 	bm.clients[client.Username] = client
 	bm.battleships[client.Username].Rejoin()
 
-	client.OutMessages <- messages.NewTurnMessage(client.Username, bm.currentPlayer() == client.Username, int(bm.waitTimer.TimeRemaining().Seconds()))
-}
-
-func (bm *BattleshipMatch) currentPlayer() string {
-	if len(bm.playersInOrder) == 0 {
-		return ""
-	}
-	return bm.playersInOrder[bm.currentPlayerIndex]
-}
-
-func (bm *BattleshipMatch) allReady() bool {
-	return len(bm.battleships) == bm.maxPlayers
-}
-
-func (bm *BattleshipMatch) waitForAction(duration int) {
-	d := time.Duration(duration) * time.Second
-	timer := time.AfterFunc(d, func() {
-		bm.nextConnection(duration)
-	})
-	bm.waitTimer = &SecondsTimer{timer, time.Now().Add(d)}
-}
-
-func (bm *BattleshipMatch) nextConnection(duration int) {
-	bm.waitTimer.timer.Stop()
-	bm.currentPlayerIndex = (bm.currentPlayerIndex + 1) % len(bm.battleships)
-	for _, c := range bm.clients {
-		c.OutMessages <- messages.NewTurnMessage(c.Username, c.Username == bm.currentPlayer(), duration)
-	}
-	bm.waitForAction(duration)
+	client.OutMessages <- messages.NewTurnMessage(client.Username, bm.turnDecider.IsCurrentPlayer(client.Username), bm.turnDecider.TimeRemaining())
 }
 
 func (bm BattleshipMatch) GetID() uuid.UUID {

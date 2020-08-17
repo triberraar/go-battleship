@@ -52,30 +52,3 @@ func (m *Matchmaker) Play(client *client.Client, gameName string) error {
 
 	return nil
 }
-
-// func (rm *RoomManager) JoinRoom(client *client.Client, gameName string) {
-// 	rm.joinMutex.Lock()
-// 	for _, room := range rm.rooms {
-// 		if room.HasPlayer(client.Username) {
-// 			room.rejoinPlayer(client)
-// 			rm.joinMutex.Unlock()
-// 			return
-// 		}
-// 	}
-// 	if rm.waitingRoom == nil || rm.waitingRoom.isFinished() {
-// 		log.Println("Creating new room")
-// 		room := NewRoom(2, gameName)
-// 		rm.rooms[room.id] = room
-// 		rm.waitingRoom = room
-// 		go room.Run()
-// 		go func(c chan bool) {
-// 			<-c
-// 			log.Println("removing finished room")
-// 			rm.joinMutex.Lock()
-// 			delete(rm.rooms, room.id)
-// 			rm.joinMutex.Unlock()
-// 		}(room.removeMe)
-// 	}
-// 	rm.waitingRoom.joinPlayer(client)
-// 	rm.joinMutex.Unlock()
-// }
