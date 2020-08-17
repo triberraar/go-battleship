@@ -83,6 +83,7 @@ export default class CommunicationManager {
   close() {
     this.feedbackText.clear()
     this.ws.close(1000)
+    console.log('closed socket')
   }
 
   reconnect() {

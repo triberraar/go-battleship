@@ -39,6 +39,10 @@ func (td *TurnDecider) AddPlayer(client *client.Client) {
 	td.clients[client.Username] = client
 }
 
+func (td *TurnDecider) Rejoin(client *client.Client) {
+	td.clients[client.Username] = client
+}
+
 func (td *TurnDecider) Players() []string {
 	return td.playersInOrder
 }

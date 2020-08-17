@@ -95,7 +95,7 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 			}
 		}
 	}
-	log.Printf("stopped processing game messages for %s")
+	log.Printf("stopped processing game messages for %s", username)
 	bm.removeMe <- true
 }
 
@@ -103,6 +103,16 @@ func (bm BattleshipMatch) Rejoin(client *client.Client) {
 	bm.clients[client.Username].Conn.Close()
 	bm.clients[client.Username] = client
 	bm.battleships[client.Username].Rejoin()
+	bm.turnDecider.Rejoin(client)
+	go func(c chan []byte) {
+		for m := range c {
+			if bm.turnDecider.IsCurrentPlayer(client.Username) {
+				bm.battleships[client.Username].Process(m)
+			}
+		}
+		log.Printf("reading inmessages ended for %s", client.Username)
+
+	}(bm.clients[client.Username].InMessages)
 
 	client.OutMessages <- messages.NewTurnMessage(client.Username, bm.turnDecider.IsCurrentPlayer(client.Username), bm.turnDecider.TimeRemaining())
 }

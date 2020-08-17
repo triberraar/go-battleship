@@ -46,6 +46,7 @@ export default class Battleships extends Vue {
   }
 
   destroyed() {
+    console.log('destroyed')
     if (this.gameInstance) {
       this.gameInstance.destroy(true)
     }
