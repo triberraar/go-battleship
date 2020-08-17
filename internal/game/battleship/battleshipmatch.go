@@ -20,8 +20,12 @@ type BattleshipMatch struct {
 }
 
 func NewBattleshipMatch(maxPlayers int) *BattleshipMatch {
-	return &BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers), make(chan bool)}
-
+	bm := BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers, turnDuration), make(chan bool)}
+	go func(c chan bool) {
+		<-c
+		bm.RemoveMe <- true
+	}(bm.turnDecider.RemoveMe)
+	return &bm
 }
 
 func (bm BattleshipMatch) GetRemoveChannel() chan bool {
@@ -49,7 +53,8 @@ func (bm *BattleshipMatch) Join(client *client.Client) {
 		for _, c := range bm.clients {
 			c.OutMessages <- messages.NewGameStartedMessage(c.Username, bm.turnDecider.IsCurrentPlayer(c.Username), turnDuration, bm.turnDecider.Players())
 		}
-		bm.turnDecider.Start(turnDuration)
+		bm.turnDecider.Start()
+
 	} else {
 		client.OutMessages <- messages.NewAwaitingPlayersMessage(client.Username)
 	}
@@ -70,7 +75,7 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 	for m := range c {
 		switch cm := m.(type) {
 		case messages.TurnMessage:
-			bm.turnDecider.NextTurn(cm.Duration)
+			bm.turnDecider.NextTurn(true)
 		case messages.VictoryMessage:
 			for _, c := range bm.clients {
 				if bm.turnDecider.IsCurrentPlayer(c.Username) {
@@ -92,7 +97,7 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 				}
 			}
 		case messages.TurnExtendedMessage:
-			bm.turnDecider.ExtendTurn(turnDuration)
+			bm.turnDecider.ExtendTurn()
 			bm.clients[cm.Username].OutMessages <- m
 		default:
 			for _, c := range bm.clients {

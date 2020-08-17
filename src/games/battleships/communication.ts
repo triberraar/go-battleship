@@ -191,6 +191,10 @@ export default class CommunicationManager {
         this.onOpponentDestroyedShip(m)
         break
       }
+      case 'CANCELLED': {
+        this.onCancelled()
+        break
+      }
       default: {
         console.error(`unknowns message ${m.type}`)
         break
@@ -253,6 +257,12 @@ export default class CommunicationManager {
       this.feedbackText.setText('The other dummy won, loser')
       this.close()
     }
+  }
+
+  onCancelled() {
+    this.boardManager.loss()
+    this.feedbackText.setText('The game got cancelled :(')
+    this.close()
   }
 
   onBoard(m: BoardMessage) {

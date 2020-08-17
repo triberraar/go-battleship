@@ -151,3 +151,13 @@ func NewBoardStateMessage(username string, hits []HitMessage, misses []MissMessa
 		Destoys:     destroys,
 	}
 }
+
+type cancelledMessage struct {
+	BaseMessage
+}
+
+func NewCancelledMessage() cancelledMessage {
+	return cancelledMessage{
+		BaseMessage{Type: "CANCELLED"},
+	}
+}

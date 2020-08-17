@@ -1,6 +1,7 @@
 package turndecider
 
 import (
+	"log"
 	"time"
 
 	"github.com/triberraar/go-battleship/internal/client"
@@ -13,6 +14,9 @@ type TurnDecider struct {
 	playersInOrder     []string
 	waitTimer          *SecondsTimer
 	clients            map[string]*client.Client
+	endTimer           *SecondsTimer
+	RemoveMe           chan bool
+	duration           int
 }
 
 type SecondsTimer struct {
@@ -24,14 +28,18 @@ func (s *SecondsTimer) TimeRemaining() time.Duration {
 	return s.end.Sub(time.Now())
 }
 
-func NewTurnDecider(maxPlayers int) *TurnDecider {
-	return &TurnDecider{
+func NewTurnDecider(maxPlayers int, duration int) *TurnDecider {
+	td := TurnDecider{
 		maxPlayers:         maxPlayers,
 		currentPlayerIndex: 0,
 		playersInOrder:     []string{},
 		waitTimer:          nil,
 		clients:            make(map[string]*client.Client),
+		RemoveMe:           make(chan bool, 2),
+		duration:           duration,
 	}
+	td.resetEndTimer()
+	return &td
 }
 
 func (td *TurnDecider) AddPlayer(client *client.Client) {
@@ -62,38 +70,66 @@ func (td *TurnDecider) IsCurrentPlayer(username string) bool {
 	return td.CurrentPlayer() == username
 }
 
-func (td *TurnDecider) Start(duration int) {
-	d := time.Duration(duration) * time.Second
+func (td *TurnDecider) Start() {
+	d := time.Duration(td.duration) * time.Second
 	timer := time.AfterFunc(d, func() {
-		td.NextTurn(duration)
+		td.NextTurn(false)
 	})
 	td.waitTimer = &SecondsTimer{timer, time.Now().Add(d)}
+
+	td.resetEndTimer()
 }
 
-func (td *TurnDecider) ExtendTurn(duration int) {
+func (td *TurnDecider) ExtendTurn() {
 	td.waitTimer.timer.Stop()
-	d := time.Duration(duration) * time.Second
+	d := time.Duration(td.duration) * time.Second
 	timer := time.AfterFunc(d, func() {
-		td.NextTurn(duration)
+		td.NextTurn(false)
 	})
 	td.waitTimer = &SecondsTimer{timer, time.Now().Add(d)}
+
+	log.Println("extending end time")
+	td.resetEndTimer()
 }
 
-func (td *TurnDecider) NextTurn(duration int) {
+func (td *TurnDecider) NextTurn(action bool) {
 	td.waitTimer.timer.Stop()
 	td.currentPlayerIndex = (td.currentPlayerIndex + 1) % len(td.playersInOrder)
 	for _, c := range td.clients {
-		c.OutMessages <- messages.NewTurnMessage(c.Username, td.IsCurrentPlayer(c.Username), duration)
+		c.OutMessages <- messages.NewTurnMessage(c.Username, td.IsCurrentPlayer(c.Username), td.duration)
 	}
-	td.wait(duration)
+	td.wait(action)
 }
 
-func (td *TurnDecider) wait(duration int) {
-	d := time.Duration(duration) * time.Second
+func (td *TurnDecider) wait(action bool) {
+	d := time.Duration(td.duration) * time.Second
 	timer := time.AfterFunc(d, func() {
-		td.NextTurn(duration)
+		td.NextTurn(false)
 	})
 	td.waitTimer = &SecondsTimer{timer, time.Now().Add(d)}
+
+	if action {
+		log.Println("extending end time in wait")
+		td.resetEndTimer()
+	}
+}
+
+func (td *TurnDecider) resetEndTimer() {
+	if td.endTimer != nil {
+		td.endTimer.timer.Stop()
+	}
+	d := time.Duration(td.duration*4) * time.Second
+	endTimer := time.AfterFunc(d, func() {
+		log.Println("ended due to timeout")
+		if td.waitTimer != nil {
+			td.waitTimer.timer.Stop()
+		}
+		for _, c := range td.clients {
+			c.OutMessages <- messages.NewCancelledMessage()
+		}
+		td.RemoveMe <- true
+	})
+	td.endTimer = &SecondsTimer{endTimer, time.Now().Add(d)}
 }
 
 func (td *TurnDecider) IsFull() bool {
