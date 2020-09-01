@@ -21,16 +21,26 @@ import smokeParticle from '@/assets/smoke.png'
 import flaresParticles from '@/assets/flares'
 import flares from '@/assets/flares.png'
 
+interface SeaSceneData {
+  URL: string
+}
+
 export default class SeaScene extends Phaser.Scene {
   private boardManager: BoardManager
 
   private communicationManager: CommunicationManager
+  private url: string
 
   constructor() {
     super('seaScene')
   }
 
+  init(data: SeaSceneData) {
+    this.url = data.URL
+  }
+
   preload() {
+    console.log('preload')
     this.load.spritesheet('tile', tile, { frameWidth: 48 })
     this.load.spritesheet('miss', miss, { frameWidth: 50, frameHeight: 50 })
     this.load.spritesheet('hit', hit, { frameWidth: 70, frameHeight: 70 })
@@ -75,6 +85,7 @@ export default class SeaScene extends Phaser.Scene {
   }
 
   create() {
+    console.log('create')
     this.anims.create({
       key: 'miss',
       frames: this.anims.generateFrameNumbers('miss', {}),
@@ -112,7 +123,7 @@ export default class SeaScene extends Phaser.Scene {
       frameRate: 16
     })
 
-    this.communicationManager = new CommunicationManager()
+    this.communicationManager = new CommunicationManager(this.url)
     this.boardManager = new BoardManager(this, 10, 10, this.communicationManager)
     this.communicationManager.setBoardManager(this.boardManager)
     this.communicationManager.setFeedbackText(new FeedbackText(this))

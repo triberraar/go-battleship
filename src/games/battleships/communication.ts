@@ -75,8 +75,10 @@ export default class CommunicationManager {
   private ws: WebSocket
   // private pingTimer: number
   private reconnectAttempts = 0
+  private url: string
 
-  constructor() {
+  constructor(url: string) {
+    this.url = url
     this.reconnect()
   }
 
@@ -91,18 +93,18 @@ export default class CommunicationManager {
       Store.commit('FAILED')
       return
     }
-    const loc = window.location
-    let wsUri = ''
-    if (loc.protocol === 'https:') {
-      wsUri = 'wss:'
-    } else {
-      wsUri = 'ws:'
-    }
-    wsUri += `//${loc.host}/battleship`
-    if (loc.host.startsWith('localhost')) {
-      wsUri = 'ws://localhost:10002/battleship'
-    }
-    wsUri += `?username=${UserStore.state.username}`
+    // const loc = window.location
+    // let wsUri = ''
+    // if (loc.protocol === 'https:') {
+    //   wsUri = 'wss:'
+    // } else {
+    //   wsUri = 'ws:'
+    // }
+    // wsUri += `//${loc.host}/battleship`
+    // if (loc.host.startsWith('localhost')) {
+    //   wsUri = 'ws://localhost:10002/battleship'
+    // }
+    const wsUri = `ws://${this.url}/battleship?username=${UserStore.state.username}`
 
     this.reconnectAttempts++
     this.ws = new WebSocket(wsUri)

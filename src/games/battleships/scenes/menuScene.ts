@@ -26,7 +26,14 @@ export default class MenuScene extends Phaser.Scene {
   // eslint-disable-next-line
   buttonClicked(button: any) {
     if (button === this.playButton) {
-      this.scene.start('seaScene')
+      // get the url
+      fetch('./play').then(response => {
+        response.json().then(data => {
+          console.log(data)
+          this.scene.start('seaScene', data)
+        })
+      })
+      // this.scene.start('seaScene')
     }
   }
 
