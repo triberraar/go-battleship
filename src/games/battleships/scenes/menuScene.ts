@@ -1,3 +1,5 @@
+import UserStore from '@/store/modules/user'
+
 export default class MenuScene extends Phaser.Scene {
   private playButton: any // eslint-disable-line
 
@@ -27,10 +29,14 @@ export default class MenuScene extends Phaser.Scene {
   buttonClicked(button: any) {
     if (button === this.playButton) {
       // get the url
-      fetch('./play').then(response => {
+      fetch(`./battleships/play?username=${UserStore.state.username}`).then(response => {
         response.json().then(data => {
           console.log(data)
-          this.scene.start('seaScene', data)
+          if (data.URL) {
+            this.scene.start('seaScene', data)
+          } else {
+            console.log('no url')
+          }
         })
       })
       // this.scene.start('seaScene')

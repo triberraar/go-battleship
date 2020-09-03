@@ -1,29 +1,71 @@
 # battle ship game
 
-Proof of concept battleship game.
-Ui written with phaser 3/Vue and typescript.
-Backend written in golang with gorilla
+Now with google open match.
 
-## demo
+# how to build
 
-on heroku: https://whispering-caverns-71033.herokuapp.com/
+first build the frontend `npm run build`
 
-## How to build
+There are 4 parts involved:
 
-First build the ui by running `npm install` `npm run build` in the root folder.
+- director: open match director
+- frontend: open match frontend
+- matchmaking: macthmaking function
+- game: runs the actual game logic
 
-Next build the backend by running `go build -o bin/go-battleship ./cmd/go-battleship/main.go` in the root folder
+All these need their docker build and pushed:
 
-Run the whole thing by executing `./bin/go-battleship`
+```
+  docker build -t triberraar/go-battleship-frontend -f Dockerfile-frontend .
+  docker push triberraar/go-battleship-frontend
 
-## How to develop
+  docker build -t triberraar/go-battleship-game -f Dockerfile-game .
+  docker push triberraar/go-battleship-game
 
-To develop you need to run two servers. One runs and watches the frontend code, the other one runs the go server
+  docker build -t triberraar/go-battleship-director -f Dockerfile-director .
+  docker push triberraar/go-battleship-director
 
-Run the ui by running `npm run serve` in the root folder. This will run a server on port 8080.
-Run the backend by running `go run ./cmd/go-battleship/` in the root folder. This will run a server on port 100002.
-Navigate to localhost:8080 and enjoy
+  docker build -t triberraar/go-battleship-matchmaking -f Dockerfile-matchmaking .
+  docker push triberraar/go-battleship-matchmaking
+```
 
-## How to deploy
+make namespace `kubectl create namespace triberraar-mm`
+apply the kubernetes file `kubectl apply -f kubernetes/matchmaking.yaml`
 
-Make sure the frontend is built, commit to master, and run `git push heroku master`. You can then open the webpage by running `heroku open` and view the logs with `heroku logs --tail`.
+You also need a standard install of open match. Depending on the username length, a player is classified as `noob` or `master`.
+noobs go to `localhost:10003`, masters go to `localhost:10003`.
+to run in minikube, you need to port forward `kubectl port-forward --namespace triberraar-mm service/go-battleship-frontend 10002:10002` and also the 2 game instances `kubectl port-forward --namespace triberraar-mm service/go-battleship-game 10003:10003` adn `kubectl port-forward --namespace triberraar-mm service/go-battleship-game2 10004:10004`
+
+# Run locally
+
+Edit the following and uncomment the stuff:
+
+- director
+- frontend
+- matchmaking
+
+forward all internal matchmaking stuff:
+
+```
+kubectl port-forward --namespace open-match service/om-frontend 50504:50504
+kubectl port-forward --namespace open-match service/om-backend 50505:50505
+kubectl port-forward --namespace open-match service/om-query 50503:50503
+```
+
+run all components:
+
+```
+go run ./cmd/go-battleship-director/
+go run ./cmd/go-battleship-frontend/
+go run ./cmd/go-battleship-game/
+go run ./cmd/go-battleship-matchmaking/
+```
+
+go to localhost:10002 and play
+
+to remove
+`kubectl delete namespace triberraar-mm`
+
+## read logs
+
+kubectl logs -n triberraar-mm --follow service/go-battleship-frontend

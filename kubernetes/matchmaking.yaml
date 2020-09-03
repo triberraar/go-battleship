@@ -1,0 +1,163 @@
+# Run `kubectl apply -f matchmaking.yaml` to deploy these definitions.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-battleship-director
+  namespace: triberraar-mm
+spec:
+  containers:
+    - name: go-battleship-director
+      image: triberraar/go-battleship-director:latest
+      imagePullPolicy: Always
+  hostname: go-battleship-director
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-battleship-matchmaking
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: matchmaking
+spec:
+  containers:
+    - name: go-battleship-matchmaking
+      image: triberraar/go-battleship-matchmaking:latest
+      imagePullPolicy: Always
+      ports:
+        - name: grpc
+          containerPort: 50502
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: go-battleship-matchmaking
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: matchmaking
+spec:
+  selector:
+    app: go-battleship
+    component: matchmaking
+  clusterIP: None
+  type: ClusterIP
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 50502
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-battleship-frontend
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-frontend
+spec:
+  containers:
+    - name: go-battleship-frontend
+      image: triberraar/go-battleship-frontend:latest
+      imagePullPolicy: Always
+      ports:
+        - name: http
+          containerPort: 10002
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: go-battleship-frontend
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-frontend
+spec:
+  selector:
+    app: go-battleship
+    component: go-battleship-frontend
+  clusterIP: None
+  type: ClusterIP
+  ports:
+    - name: http
+      protocol: TCP
+      port: 10002
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-battleship-game
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-game
+spec:
+  containers:
+    - name: go-battleship-game
+      image: triberraar/go-battleship-game:latest
+      imagePullPolicy: Always
+      ports:
+        - name: http
+          containerPort: 10003
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: go-battleship-game
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-game
+spec:
+  selector:
+    app: go-battleship
+    component: go-battleship-game
+  clusterIP: None
+  type: ClusterIP
+  ports:
+    - name: http
+      protocol: TCP
+      port: 10003
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-battleship-game2
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-game2
+spec:
+  containers:
+    - name: go-battleship-game2
+      image: triberraar/go-battleship-game:latest
+      imagePullPolicy: Always
+      env:
+        - name: PORT
+          value: '10004'
+      ports:
+        - name: http
+          containerPort: 10004
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: go-battleship-game2
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-game2
+spec:
+  selector:
+    app: go-battleship
+    component: go-battleship-game2
+  clusterIP: None
+  type: ClusterIP
+  ports:
+    - name: httpp
+      protocol: TCP
+      port: 10004
+---
+

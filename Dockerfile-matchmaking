@@ -1,0 +1,8 @@
+FROM golang:alpine as go
+WORKDIR /app
+ENV GO111MODULE=on
+
+COPY . .
+RUN go build -o bin/go-battleship-matchmaking ./cmd/go-battleship-matchmaking/main.go
+
+CMD ["/app/bin/go-battleship-matchmaking"]
