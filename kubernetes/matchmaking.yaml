@@ -160,4 +160,44 @@ spec:
       protocol: TCP
       port: 10004
 ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-battleship-rps
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-rps
+spec:
+  containers:
+    - name: go-battleship-rps
+      image: triberraar/go-battleship-rps:latest
+      imagePullPolicy: Always
+      env:
+        - name: PORT
+          value: '10012'
+      ports:
+        - name: http
+          containerPort: 10012
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: go-battleship-rps
+  namespace: triberraar-mm
+  labels:
+    app: go-battleship
+    component: go-battleship-rps
+spec:
+  selector:
+    app: go-battleship
+    component: go-battleship-rps
+  clusterIP: None
+  type: ClusterIP
+  ports:
+    - name: httpp
+      protocol: TCP
+      port: 10012
+---
 

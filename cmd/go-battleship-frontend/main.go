@@ -31,6 +31,7 @@ func main() {
 	log.SetFlags(0)
 	router := mux.NewRouter()
 	router.HandleFunc("/battleships/play", playBattleships).Methods("GET")
+	router.HandleFunc("/rps/play", playRps).Methods("GET")
 	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("dist/"))))
 	log.Printf("Server listening on %s for shure", port)
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
@@ -42,6 +43,59 @@ type playMessage struct {
 
 type errorMessage struct {
 	Error string
+}
+
+func playRps(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	log.Println("connecting")
+	conn, err := grpc.Dial(openMatchFrontEnd, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("failed to contact open match %v", err)
+	}
+	log.Println("connected")
+	defer conn.Close()
+	fe := pb.NewFrontendServiceClient(conn)
+	req := &pb.CreateTicketRequest{
+		Ticket: &pb.Ticket{
+			SearchFields: &pb.SearchFields{
+				Tags: []string{
+					"rps",
+				},
+			},
+		},
+	}
+	resp, err := fe.CreateTicket(context.Background(), req)
+	if err != nil {
+		log.Printf("failed to create ticket, got %s", err.Error())
+	}
+	ticketId := resp.Id
+	assignment := make(chan *pb.Assignment)
+	errch := make(chan string)
+
+	defer deleteTicket(fe, ticketId)
+
+	ctx, cancel := context.WithCancel(r.Context())
+	go streamAssignment(ctx, fe, ticketId, assignment, errch)
+	ticker := time.NewTicker(30000 * time.Millisecond)
+	for {
+		select {
+		case err := <-errch:
+			log.Println("something on the errorchannel ", err)
+			json.NewEncoder(w).Encode(&errorMessage{err})
+			return
+		case assignment := <-assignment:
+			log.Println("got an assignement ", assignment)
+			// json.NewEncoder(w).Encode(&playMessage{URL: "localhost:10003"})
+			json.NewEncoder(w).Encode(&playMessage{URL: assignment.Connection})
+			return
+		case <-ticker.C:
+			log.Println("no assignment")
+			cancel()
+			json.NewEncoder(w).Encode(&errorMessage{"no assignemnt"})
+			ticker.Stop()
+			return
+		}
+	}
 }
 
 func playBattleships(w http.ResponseWriter, r *http.Request) {

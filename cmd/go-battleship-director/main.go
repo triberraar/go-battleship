@@ -48,27 +48,37 @@ func run() error {
 
 func fetchMatches(bc pb.BackendServiceClient) {
 	var profiles []*pb.MatchProfile
-	games := []string{"battleships"}
+	// games := []string{"battleships", "rps"}
 	xps := []string{"noob", "master"}
-	for _, game := range games {
-		for _, xp := range xps {
-			var pools []*pb.Pool
-			pools = append(pools, &pb.Pool{
-				Name:              fmt.Sprintf("pool_%s_%s", game, xp),
-				TagPresentFilters: []*pb.TagPresentFilter{{Tag: game}},
-				StringEqualsFilters: []*pb.StringEqualsFilter{
-					{
-						StringArg: "xp",
-						Value:     xp,
-					},
+	// for _, game := range games {
+	for _, xp := range xps {
+		var pools []*pb.Pool
+		pools = append(pools, &pb.Pool{
+			Name:              fmt.Sprintf("pool_%s_%s", "battleships", xp),
+			TagPresentFilters: []*pb.TagPresentFilter{{Tag: "battleships"}},
+			StringEqualsFilters: []*pb.StringEqualsFilter{
+				{
+					StringArg: "xp",
+					Value:     xp,
 				},
-			})
-			profiles = append(profiles, &pb.MatchProfile{
-				Name:  fmt.Sprintf("Profile_%s_%s", game, xp),
-				Pools: pools,
-			})
-		}
+			},
+		})
+		profiles = append(profiles, &pb.MatchProfile{
+			Name:  fmt.Sprintf("Profile_%s_%s", "battleships", xp),
+			Pools: pools,
+		})
+		// }
 	}
+
+	var pools []*pb.Pool
+	pools = append(pools, &pb.Pool{
+		Name:              fmt.Sprintf("pool_%s_%s", "rps", "blaat"),
+		TagPresentFilters: []*pb.TagPresentFilter{{Tag: "rps"}},
+	})
+	profiles = append(profiles, &pb.MatchProfile{
+		Name:  fmt.Sprintf("Profile_%s_%s", "rps", "blaat"),
+		Pools: pools,
+	})
 
 	// subroutine this stuff
 	for _, p := range profiles {
@@ -132,6 +142,8 @@ func getServerFromProfile(profile string) string {
 		return "localhost:10003"
 	} else if splitted[1] == "battleships" && splitted[2] == "master" {
 		return "localhost:10004"
+	} else if splitted[1] == "rps" {
+		return "localhost:10012"
 	} else {
 		return ""
 	}

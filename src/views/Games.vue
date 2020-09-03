@@ -10,8 +10,8 @@
             />
           </figure>
         </article>
-        <article class="tile is-child box is-4">
-          <p class="title">Other game</p>
+        <article class="tile is-child box is-4" @click="playRps">
+          <p class="title">RPS</p>
         </article>
         <article class="tile is-child box is-4">
           <p class="title">Other game</p>
@@ -37,7 +37,19 @@ export default class Games extends Vue {
       this.$buefy.notification.open({
         message: 'You need to be logged in to play this game',
         type: 'is-danger',
-        hasIcon: true
+        hasIcon: true,
+      })
+    }
+  }
+
+  playRps(): void {
+    if (this.userModule.loggedIn) {
+      this.$router.push({ name: 'rps' })
+    } else {
+      this.$buefy.notification.open({
+        message: 'You need to be logged in to play this game',
+        type: 'is-danger',
+        hasIcon: true,
       })
     }
   }

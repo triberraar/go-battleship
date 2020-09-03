@@ -4,6 +4,7 @@ import Home from '../views/Home.vue'
 import Games from '../views/Games.vue'
 import Login from '../views/Login.vue'
 import Battleships from '../views/Battleships.vue'
+import RockPaperScissor from '../views/RockPaperScissor.vue'
 
 Vue.use(VueRouter)
 
@@ -35,6 +36,11 @@ const routes: Array<RouteConfig> = [
     path: '/bs',
     name: 'Battleships',
     component: Battleships
+  },
+  {
+    path: '/rps',
+    name: 'rps',
+    component: RockPaperScissor
   }
 ]
 
