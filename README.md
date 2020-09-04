@@ -22,6 +22,9 @@ All these need their docker build and pushed:
   docker build -t triberraar/go-battleship-game -f Dockerfile-game .
   docker push triberraar/go-battleship-game
 
+  docker build -t triberraar/go-rps -f Dockerfile-rps .
+  docker push triberraar/go-rps
+
   docker build -t triberraar/go-battleship-director -f Dockerfile-director .
   docker push triberraar/go-battleship-director
 
@@ -51,6 +54,11 @@ kubectl port-forward --namespace open-match service/om-frontend 50504:50504
 kubectl port-forward --namespace open-match service/om-backend 50505:50505
 kubectl port-forward --namespace open-match service/om-query 50503:50503
 ```
+
+kubectl port-forward --namespace triberraar-mm service/go-battleship-frontend 10002:10002
+kubectl port-forward --namespace triberraar-mm service/go-battleship-game 10003:10003
+kubectl port-forward --namespace triberraar-mm service/go-battleship-game2 10004:10004
+kubectl port-forward --namespace triberraar-mm service/go-rps 10012:10012
 
 run all components:
 

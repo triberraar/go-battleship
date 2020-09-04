@@ -5,4 +5,4 @@ ENV GO111MODULE=on
 COPY . .
 RUN go build -o bin/go-battleship-frontend ./cmd/go-battleship-frontend/main.go
 
-CMD ["/app/bin/go-battleship-frontend"]
+CMD ["./bin/go-battleship-frontend"]

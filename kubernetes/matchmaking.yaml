@@ -163,15 +163,15 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: go-battleship-rps
+  name: go-rps
   namespace: triberraar-mm
   labels:
     app: go-battleship
-    component: go-battleship-rps
+    component: go-rps
 spec:
   containers:
-    - name: go-battleship-rps
-      image: triberraar/go-battleship-rps:latest
+    - name: go-rps
+      image: triberraar/go-rps:latest
       imagePullPolicy: Always
       env:
         - name: PORT
@@ -184,15 +184,15 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: go-battleship-rps
+  name: go-rps
   namespace: triberraar-mm
   labels:
     app: go-battleship
-    component: go-battleship-rps
+    component: go-rps
 spec:
   selector:
     app: go-battleship
-    component: go-battleship-rps
+    component: go-rps
   clusterIP: None
   type: ClusterIP
   ports:
