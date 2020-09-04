@@ -140,13 +140,13 @@ func getServerFromProfile(profile string) string {
 	}
 	if splitted[1] == "battleships" && splitted[2] == "noob" {
 		// return "localhost:10003"
-		return "go-battleship-game2.triberraar-mm.svc.cluster.local:10003"
+		return "34.91.100.150:10003"
 	} else if splitted[1] == "battleships" && splitted[2] == "master" {
 		// return "localhost:10004"
-		return "go-battleship-game.triberraar-mm.svc.cluster.local:10004"
+		return "34.91.0.125:10004"
 	} else if splitted[1] == "rps" {
 		// return "localhost:10012"
-		return "go-rps.triberraar-mm.svc.cluster.local:10012"
+		return "34.91.45.90:10012"
 	} else {
 		return ""
 	}
