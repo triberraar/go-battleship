@@ -9,7 +9,7 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceRoot}/cmd/go-battleship/main.go",
+      "program": "${workspaceRoot}/cmd/battleship/main.go",
       "env": {},
       "args": []
     }

@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/triberraar/go-battleship/internal/client"
+	"github.com/triberraar/battleship/internal/client"
 )
 
 type Matchmaker struct {

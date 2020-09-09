@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/triberraar/go-battleship/internal/client"
-	"github.com/triberraar/go-battleship/internal/messages"
+	"github.com/triberraar/battleship/internal/client"
+	"github.com/triberraar/battleship/internal/messages"
 )
 
 type TurnDecider struct {

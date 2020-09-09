@@ -21,7 +21,7 @@ import (
 const (
 	openMatchBackEnd = "om-backend.open-match.svc.cluster.local:50505"
 	// openMatchBackEnd = "localhost:50505"
-	openMatchMatchmakingHost = "go-battleship-matchmaking.triberraar-mm.svc.cluster.local"
+	openMatchMatchmakingHost = "matchmaking.triberraar-mm.svc.cluster.local"
 	// openMatchMatchmakingHost       = "192.168.1.171"
 	openMatchMatchmakingPort int32 = 50502
 )

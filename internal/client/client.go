@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/triberraar/go-battleship/internal/messages"
+	"github.com/triberraar/battleship/internal/messages"
 )
 
 const (

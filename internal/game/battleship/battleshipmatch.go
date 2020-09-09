@@ -4,9 +4,9 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/triberraar/go-battleship/internal/client"
-	"github.com/triberraar/go-battleship/internal/messages"
-	"github.com/triberraar/go-battleship/internal/turndecider"
+	"github.com/triberraar/battleship/internal/client"
+	"github.com/triberraar/battleship/internal/messages"
+	"github.com/triberraar/battleship/internal/turndecider"
 )
 
 type BattleshipMatch struct {

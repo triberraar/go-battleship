@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/triberraar/go-battleship/internal/client"
-	"github.com/triberraar/go-battleship/internal/game/battleship"
+	"github.com/triberraar/battleship/internal/client"
+	"github.com/triberraar/bbattleship/internal/game/battleship"
 )
 
 type Match interface {

@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/triberraar/go-battleship/internal/messages"
+	"github.com/triberraar/battleship/internal/messages"
 )
 
 const (

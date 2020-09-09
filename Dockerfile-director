@@ -3,6 +3,6 @@ WORKDIR /app
 ENV GO111MODULE=on
 
 COPY . .
-RUN go build -o bin/go-battleship-director ./cmd/go-battleship-director/main.go
+RUN go build -o bin/director ./cmd/director/main.go
 
-CMD ["/app/bin/go-battleship-director"]
+CMD ["/app/bin/director"]

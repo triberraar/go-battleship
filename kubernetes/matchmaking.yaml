@@ -28,12 +28,12 @@ roleRef:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: go-battleship-director
+  name: director
   namespace: triberraar-mm
 spec:
   containers:
-    - name: go-battleship-director
-      image: triberraar/go-battleship-director:latest
+    - name: director
+      image: triberraar/director:latest
       imagePullPolicy: Always
       resources:
         requests:
@@ -42,20 +42,20 @@ spec:
         limits:
           memory: '32Mi'
           cpu: '20m'
-  hostname: go-battleship-director
+  hostname: director
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: go-battleship-matchmaking
+  name: matchmaking
   namespace: triberraar-mm
   labels:
-    app: go-battleship
+    app: battleship
     component: matchmaking
 spec:
   containers:
-    - name: go-battleship-matchmaking
-      image: triberraar/go-battleship-matchmaking:latest
+    - name: matchmaking
+      image: triberraar/matchmaking:latest
       imagePullPolicy: Always
       ports:
         - name: grpc
@@ -71,14 +71,14 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: go-battleship-matchmaking
+  name: matchmaking
   namespace: triberraar-mm
   labels:
-    app: go-battleship
+    app: battleship
     component: matchmaking
 spec:
   selector:
-    app: go-battleship
+    app: battleship
     component: matchmaking
   clusterIP: None
   type: ClusterIP
@@ -90,15 +90,15 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: go-battleship-frontend
+  name: frontend
   namespace: triberraar-mm
   labels:
-    app: go-battleship
-    component: go-battleship-frontend
+    app: battleship
+    component: frontend
 spec:
   containers:
-    - name: go-battleship-frontend
-      image: triberraar/go-battleship-frontend:latest
+    - name: frontend
+      image: triberraar/frontend:latest
       imagePullPolicy: Always
       ports:
         - name: http
@@ -114,15 +114,15 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: go-battleship-frontend
+  name: frontend
   namespace: triberraar-mm
   labels:
-    app: go-battleship
-    component: go-battleship-frontend
+    app: battleship
+    component: frontend
 spec:
   selector:
-    app: go-battleship
-    component: go-battleship-frontend
+    app: battleship
+    component: frontend
   clusterIP: None
   type: ClusterIP
   ports:

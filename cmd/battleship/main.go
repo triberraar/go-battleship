@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	bsHandlers "github.com/triberraar/go-battleship/internal/handlers"
-	"github.com/triberraar/go-battleship/internal/match"
+	bsHandlers "github.com/triberraar/battleship/internal/handlers"
+	"github.com/triberraar/battleship/internal/match"
 )
 
 var addr = flag.String("addr", "localhost:10002", "http service address")

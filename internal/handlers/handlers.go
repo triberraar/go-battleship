@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/triberraar/go-battleship/internal/client"
-	"github.com/triberraar/go-battleship/internal/match"
+	"github.com/triberraar/battleship/internal/client"
+	"github.com/triberraar/battleship/internal/match"
 )
 
 var upgrader = websocket.Upgrader{
