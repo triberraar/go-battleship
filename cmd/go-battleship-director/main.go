@@ -141,7 +141,7 @@ func allocateGameServer(agonesClient *versioned.Clientset) (string, error) {
 		&allocationv1.GameServerAllocation{
 			Spec: allocationv1.GameServerAllocationSpec{
 				Required: metav1.LabelSelector{
-					MatchLabels: map[string]string{agonesv1.FleetNameLabel: "rps"},
+					MatchLabels: map[string]string{agonesv1.FleetNameLabel: "go-rps"},
 				},
 			},
 		},
