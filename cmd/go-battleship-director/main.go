@@ -148,11 +148,11 @@ func allocateGameServer(agonesClient *versioned.Clientset) (string, error) {
 	)
 
 	if err != nil {
-		log.Fatalf("couldnt get me a server allocated %v", err)
+		log.Printf("couldnt get me a server allocated %v", err)
 		return "", fmt.Errorf("Failed to allocate server")
 	}
 	if gsa.Status.State != allocationv1.GameServerAllocationAllocated {
-		log.Fatalf("server is not in allocated state %v", gsa.Status.State)
+		log.Printf("server is not in allocated state %v", gsa.Status.State)
 		return "", fmt.Errorf("Failed to allocate server")
 	}
 	log.Printf("gonna connect to server %s", gsa.Status.GameServerName)

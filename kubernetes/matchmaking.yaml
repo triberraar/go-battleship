@@ -7,29 +7,23 @@ metadata:
   name: triberraar-mm
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: agones-sdk-access
-  namespace: default
+  name: geert-success
+  namespace: agones-system
   labels:
     app: agones
     chart: agones-1.9.0-dev
     release: agones-manual
     heritage: Helm
 subjects:
-  - kind: User
-    name: system:serviceaccount:default:agones-sdk
-    apiGroup: rbac.authorization.k8s.io
-  - kind: User
-    name: system:serviceaccount:default:default
-    apiGroup: rbac.authorization.k8s.io
-  - kind: User
-    name: system:serviceaccount:triberraar-mm:default
-    apiGroup: rbac.authorization.k8s.io
+  - kind: ServiceAccount
+    name: default
+    namespace: triberraar-mm
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: agones-sdk
+  name: agones-allocator
 ---
 apiVersion: v1
 kind: Pod
