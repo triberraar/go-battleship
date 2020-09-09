@@ -15,21 +15,11 @@ type BattleshipMatch struct {
 	battleships map[string]*Battleship
 	clients     map[string]*client.Client
 	turnDecider *turndecider.TurnDecider
-
-	RemoveMe chan bool
 }
 
 func NewBattleshipMatch(maxPlayers int) *BattleshipMatch {
-	bm := BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers, turnDuration), make(chan bool)}
-	go func(c chan bool) {
-		<-c
-		bm.RemoveMe <- true
-	}(bm.turnDecider.RemoveMe)
+	bm := BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers, turnDuration)}
 	return &bm
-}
-
-func (bm BattleshipMatch) GetRemoveChannel() chan bool {
-	return bm.RemoveMe
 }
 
 func (bm BattleshipMatch) ShouldRejoin(username string) bool {
@@ -87,7 +77,7 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 			for _, bs := range bm.battleships {
 				close(bs.OutMessages)
 			}
-			bm.RemoveMe <- true
+			// close server
 		case messages.ShipDestroyedMessage:
 			for _, c := range bm.clients {
 				if bm.turnDecider.IsCurrentPlayer(c.Username) {
@@ -125,13 +115,3 @@ func (bm BattleshipMatch) Rejoin(client *client.Client) {
 
 	client.OutMessages <- messages.NewTurnMessage(client.Username, bm.turnDecider.IsCurrentPlayer(client.Username), bm.turnDecider.TimeRemaining())
 }
-
-func (bm BattleshipMatch) GetID() uuid.UUID {
-	return bm.id
-}
-
-/*
-	ShouldRejoin(username string) bool
-	Join(client client.Client)
-	Rejoin(client client.Client)
-*/

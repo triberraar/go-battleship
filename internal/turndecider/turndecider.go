@@ -15,7 +15,6 @@ type TurnDecider struct {
 	waitTimer          *SecondsTimer
 	clients            map[string]*client.Client
 	endTimer           *SecondsTimer
-	RemoveMe           chan bool
 	duration           int
 }
 
@@ -35,7 +34,6 @@ func NewTurnDecider(maxPlayers int, duration int) *TurnDecider {
 		playersInOrder:     []string{},
 		waitTimer:          nil,
 		clients:            make(map[string]*client.Client),
-		RemoveMe:           make(chan bool, 2),
 		duration:           duration,
 	}
 	td.resetEndTimer()
@@ -127,7 +125,7 @@ func (td *TurnDecider) resetEndTimer() {
 		for _, c := range td.clients {
 			c.OutMessages <- messages.NewCancelledMessage()
 		}
-		td.RemoveMe <- true
+		// shutdown server
 	})
 	td.endTimer = &SecondsTimer{endTimer, time.Now().Add(d)}
 }

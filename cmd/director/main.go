@@ -126,13 +126,24 @@ func fetchMatches(bc pb.BackendServiceClient, agonesClient *versioned.Clientset)
 				log.Println("error receiving from stream", err)
 				break
 			}
-			adr, err := allocateGameServer(agonesClient)
+			adr, err := adr(resp.Match.MatchProfile, agonesClient)
 			if err == nil {
+
 				bc.AssignTickets(context.Background(), createAssignTicketRequest(resp.GetMatch(), adr))
 			}
 
 		}
 
+	}
+}
+
+// hax
+func adr(profile string, agonesClient *versioned.Clientset) (string, error) {
+	if strings.Contains(profile, "rps") {
+		adr, err := allocateGameServer(agonesClient)
+		return adr, err
+	} else {
+		return "localhost:10003", nil
 	}
 }
 
@@ -184,11 +195,9 @@ func getServerFromProfile(profile string) string {
 		return ""
 	}
 	if splitted[1] == "battleships" && splitted[2] == "noob" {
-		// return "localhost:10003"
-		return "34.91.100.150:10003"
+		return "localhost:10003"
 	} else if splitted[1] == "battleships" && splitted[2] == "master" {
-		// return "localhost:10004"
-		return "34.91.0.125:10004"
+		return "localhost:10003"
 	} else if splitted[1] == "rps" {
 		// return "localhost:10012"
 		return "34.91.45.90:10012"
