@@ -17,12 +17,15 @@ metadata:
     release: agones-manual
     heritage: Helm
 subjects:
-- kind: User
-  name: system:serviceaccount:default:agones-sdk
-  apiGroup: rbac.authorization.k8s.io
-- kind: User
-  name: system:serviceaccount:default:default
-  apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: system:serviceaccount:default:agones-sdk
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: system:serviceaccount:default:default
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: system:serviceaccount:triberraar-mm:default
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

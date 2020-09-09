@@ -77,3 +77,15 @@ to remove
 ## read logs
 
 kubectl logs -n triberraar-mm --follow pod/go-battleship-director
+kubectl logs -n open-match --follow pod/om-backend-67998d6miniff-dbr69
+
+## install from 0
+
+minikube start --kubernetes-version v1.16.0
+
+kubectl apply --namespace open-match -f kubernetes/open-match-core.yaml
+
+kubectl create namespace agones-system
+kubectl apply -f kubernetes/agones.yaml
+
+kubectl apply -f kubernetes/matchmaking.yaml
