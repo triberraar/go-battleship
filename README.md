@@ -76,4 +76,4 @@ to remove
 
 ## read logs
 
-kubectl logs -n triberraar-mm --follow service/go-battleship-frontend
+kubectl logs -n triberraar-mm --follow pod/go-battleship-director

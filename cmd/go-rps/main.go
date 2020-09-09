@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	agones "agones.dev/agones/sdks/go"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -34,6 +35,28 @@ type myServer struct {
 	http.Server
 	shutdownReq     chan string
 	rpsGameInstance *rpsGame
+	agonesHealth    *agonesHealth
+}
+
+type agonesHealth struct {
+	agones *agones.SDK
+	stop   chan bool
+}
+
+func (ah *agonesHealth) doHealth() {
+	tick := time.Tick(2 * time.Second)
+	for {
+		select {
+		case <-ah.stop:
+			log.Println("stopping healthcheck, going dowm")
+			return
+		case <-tick:
+			if err := ah.agones.Health(); err != nil {
+				log.Fatalf("Freaking failed the healtch %v", err)
+			}
+		}
+
+	}
 }
 
 func (s *myServer) WaitShutdown() {
@@ -57,6 +80,8 @@ func (s *myServer) WaitShutdown() {
 			}
 		}
 	}
+	s.agonesHealth.stop <- true
+	s.agonesHealth.agones.Shutdown()
 
 	log.Printf("Stoping http server ...")
 
@@ -84,6 +109,7 @@ func (s *myServer) run() {
 			u1 = m.Username
 			m1 = m.Move
 			log.Println(u1)
+			go s.cancelGame()
 		} else {
 			u2 = m.Username
 			m2 = m.Move
@@ -136,13 +162,26 @@ func main() {
 
 	log.Printf("Server listening on %s for shure", port)
 
-	// log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
+	agones, err := agones.NewSDK()
+	if err != nil {
+		log.Fatalf("agones sdk creation failed %v", err)
+	}
+	agonesHealth := &agonesHealth{
+		agones: agones,
+		stop:   make(chan bool),
+	}
+
 	addr := ":" + port
-	server := &myServer{http.Server{Addr: addr}, make(chan string), &rpsGame{
-		make(chan rpsMove),
-		make(map[string]chan result),
-		make(map[string]chan bool),
-	}}
+	server := &myServer{
+		http.Server{Addr: addr},
+		make(chan string),
+		&rpsGame{
+			make(chan rpsMove),
+			make(map[string]chan result),
+			make(map[string]chan bool),
+		},
+		agonesHealth,
+	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/play", server.playrps).Methods("POST")
@@ -157,7 +196,8 @@ func main() {
 		}
 		done <- true
 	}()
-	go server.cancelGame()
+	agones.Ready()
+	go agonesHealth.doHealth()
 
 	//wait shutdown
 	server.WaitShutdown()

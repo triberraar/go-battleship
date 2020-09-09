@@ -1,0 +1,23 @@
+apiVersion: 'agones.dev/v1'
+kind: GameServer
+metadata:
+  generateName: 'simple-tcp2-'
+spec:
+  ports:
+    - name: default
+      portPolicy: Static
+      containerPort: 7654
+      hostPort: 7654
+      protocol: TCP
+  template:
+    spec:
+      containers:
+        - name: simple-tcp
+          image: gcr.io/agones-images/tcp-server:0.4
+          resources:
+            requests:
+              memory: '32Mi'
+              cpu: '20m'
+            limits:
+              memory: '32Mi'
+              cpu: '20m'

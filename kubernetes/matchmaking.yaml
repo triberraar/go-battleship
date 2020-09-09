@@ -3,26 +3,33 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    name: triberraar-mm-2
-  name: triberraar-mm-2
+    name: triberraar-mm
+  name: triberraar-mm
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: go-battleship-director
-  namespace: triberraar-mm-2
+  namespace: triberraar-mm
 spec:
   containers:
     - name: go-battleship-director
       image: triberraar/go-battleship-director:latest
       imagePullPolicy: Always
+      resources:
+        requests:
+          memory: '32Mi'
+          cpu: '20m'
+        limits:
+          memory: '32Mi'
+          cpu: '20m'
   hostname: go-battleship-director
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: go-battleship-matchmaking
-  namespace: triberraar-mm-2
+  namespace: triberraar-mm
   labels:
     app: go-battleship
     component: matchmaking
@@ -34,12 +41,19 @@ spec:
       ports:
         - name: grpc
           containerPort: 50502
+      resources:
+        requests:
+          memory: '32Mi'
+          cpu: '20m'
+        limits:
+          memory: '32Mi'
+          cpu: '20m'
 ---
 kind: Service
 apiVersion: v1
 metadata:
   name: go-battleship-matchmaking
-  namespace: triberraar-mm-2
+  namespace: triberraar-mm
   labels:
     app: go-battleship
     component: matchmaking
@@ -58,7 +72,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: go-battleship-frontend
-  namespace: triberraar-mm-2
+  namespace: triberraar-mm
   labels:
     app: go-battleship
     component: go-battleship-frontend
@@ -70,12 +84,19 @@ spec:
       ports:
         - name: http
           containerPort: 10002
+      resources:
+        requests:
+          memory: '32Mi'
+          cpu: '20m'
+        limits:
+          memory: '32Mi'
+          cpu: '20m'
 ---
 kind: Service
 apiVersion: v1
 metadata:
   name: go-battleship-frontend
-  namespace: triberraar-mm-2
+  namespace: triberraar-mm
   labels:
     app: go-battleship
     component: go-battleship-frontend
@@ -89,121 +110,5 @@ spec:
     - name: http
       protocol: TCP
       port: 10002
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: go-battleship-game
-  namespace: triberraar-mm-2
-  labels:
-    app: go-battleship
-    component: go-battleship-game
-spec:
-  containers:
-    - name: go-battleship-game
-      image: triberraar/go-battleship-game:latest
-      imagePullPolicy: Always
-      ports:
-        - name: http
-          containerPort: 10003
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: go-battleship-game
-  namespace: triberraar-mm-2
-  labels:
-    app: go-battleship
-    component: go-battleship-game
-spec:
-  selector:
-    app: go-battleship
-    component: go-battleship-game
-  clusterIP: None
-  type: ClusterIP
-  ports:
-    - name: http
-      protocol: TCP
-      port: 10003
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: go-battleship-game2
-  namespace: triberraar-mm-2
-  labels:
-    app: go-battleship
-    component: go-battleship-game2
-spec:
-  containers:
-    - name: go-battleship-game2
-      image: triberraar/go-battleship-game:latest
-      imagePullPolicy: Always
-      env:
-        - name: PORT
-          value: '10004'
-      ports:
-        - name: http
-          containerPort: 10004
-
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: go-battleship-game2
-  namespace: triberraar-mm-2
-  labels:
-    app: go-battleship
-    component: go-battleship-game2
-spec:
-  selector:
-    app: go-battleship
-    component: go-battleship-game2
-  clusterIP: None
-  type: ClusterIP
-  ports:
-    - name: httpp
-      protocol: TCP
-      port: 10004
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: go-rps
-  namespace: triberraar-mm-2
-  labels:
-    app: go-battleship
-    component: go-rps
-spec:
-  containers:
-    - name: go-rps
-      image: triberraar/go-rps:latest
-      imagePullPolicy: Always
-      env:
-        - name: PORT
-          value: '10012'
-      ports:
-        - name: http
-          containerPort: 10012
-
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: go-rps
-  namespace: triberraar-mm-2
-  labels:
-    app: go-battleship
-    component: go-rps
-spec:
-  selector:
-    app: go-battleship
-    component: go-rps
-  clusterIP: None
-  type: ClusterIP
-  ports:
-    - name: httpp
-      protocol: TCP
-      port: 10012
 ---
 
