@@ -11,7 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	agones "agones.dev/agones/sdks/go"
+	"agones.dev/agones/pkg/sdk"
+	agonesSDK "agones.dev/agones/sdks/go"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -39,7 +40,7 @@ type myServer struct {
 }
 
 type agonesHealth struct {
-	agones *agones.SDK
+	agones *agonesSDK.SDK
 	stop   chan bool
 }
 
@@ -109,7 +110,6 @@ func (s *myServer) run() {
 			u1 = m.Username
 			m1 = m.Move
 			log.Println(u1)
-			go s.cancelGame()
 		} else {
 			u2 = m.Username
 			m2 = m.Move
@@ -162,7 +162,7 @@ func main() {
 
 	log.Printf("Server listening on %s for shure", port)
 
-	agones, err := agones.NewSDK()
+	agones, err := agonesSDK.NewSDK()
 	if err != nil {
 		log.Fatalf("agones sdk creation failed %v", err)
 	}
@@ -199,11 +199,20 @@ func main() {
 	agones.Ready()
 	go agonesHealth.doHealth()
 
+	agones.WatchGameServer(server.watch)
+
 	//wait shutdown
 	server.WaitShutdown()
 
 	<-done
 	log.Printf("DONE!")
+}
+
+func (s *myServer) watch(gs *sdk.GameServer) {
+	if gs.Status.State == "Allocated" {
+		log.Println("server is allocated")
+		go s.cancelGame()
+	}
 }
 
 func (s *myServer) playrps(w http.ResponseWriter, r *http.Request) {
