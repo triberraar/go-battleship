@@ -3,6 +3,6 @@ WORKDIR /app
 ENV GO111MODULE=on
 
 COPY . .
-RUN go build -o bin/go-rps ./cmd/go-rps/main.go
+RUN go build -o bin/rps ./cmd/rps/main.go
 
-CMD ["/app/bin/go-rps"]
+CMD ["/app/bin/rps"]

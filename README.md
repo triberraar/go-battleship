@@ -35,7 +35,7 @@ All these need their docker build and pushed:
   docker build -t triberraar/frontend -f Dockerfile-frontend .
   docker push triberraar/frontend
 
-  docker build -t triberraar/battleship -f Dockerfile-game .
+  docker build -t triberraar/battleship -f Dockerfile-battleship .
   docker push triberraar/battleship
 
   docker build -t triberraar/rps -f Dockerfile-rps .

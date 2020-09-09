@@ -1,29 +1,7 @@
---- # ---
-# apiVersion: 'agones.dev/v1'
-# kind: GameServer
-# metadata:
-#   generateName: 'go-rps'
-# spec:
-#   ports:
-#     - name: default
-#       portPolicy: Dynamic
-#       containerPort: 10012
-#   template:
-#     spec:
-#       containers:
-#         - name: go-rps
-#           image: triberraar/go-rps:latest
-#           resources:
-#             requests:
-#               memory: '32Mi'
-#               cpu: '20m'
-#             limits:
-#               memory: '32Mi'
-#               cpu: '20m'
 apiVersion: 'agones.dev/v1'
 kind: Fleet
 metadata:
-  name: go-rps
+  name: rps
 spec:
   replicas: 2
   template:
@@ -34,8 +12,8 @@ spec:
       template:
         spec:
           containers:
-            - name: go-rps
-              image: triberraar/go-rps:latest
+            - name: rps
+              image: triberraar/rps:latest
               resources:
                 requests:
                   memory: '64Mi'
@@ -47,9 +25,9 @@ spec:
 apiVersion: 'autoscaling.agones.dev/v1'
 kind: FleetAutoscaler
 metadata:
-  name: go-rps-autoscaler
+  name: autoscaler
 spec:
-  fleetName: go-rps
+  fleetName: rps
   policy:
     type: Buffer
     buffer:
