@@ -17,10 +17,10 @@ spec:
               resources:
                 requests:
                   memory: '64Mi'
-                  cpu: '20m'
+                  cpu: '10m'
                 limits:
                   memory: '64Mi'
-                  cpu: '20m'
+                  cpu: '10m'
 ---
 apiVersion: 'autoscaling.agones.dev/v1'
 kind: FleetAutoscaler

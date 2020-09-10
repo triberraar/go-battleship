@@ -172,8 +172,8 @@ func fetchMatches(bc pb.BackendServiceClient, agonesClient *versioned.Clientset)
 				break
 			}
 			adr, err := allocateGameServer(agonesClient, resp.Match.MatchProfile)
+			log.Printf("fond a match for profile %s", resp.Match.MatchProfile)
 			if err == nil {
-
 				bc.AssignTickets(context.Background(), createAssignTicketRequest(resp.GetMatch(), adr))
 			}
 

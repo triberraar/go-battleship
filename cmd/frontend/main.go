@@ -112,7 +112,7 @@ func playBattleships(w http.ResponseWriter, r *http.Request) {
 		Ticket: &pb.Ticket{
 			SearchFields: &pb.SearchFields{
 				Tags: []string{
-					"battleships",
+					"battleship",
 				},
 				StringArgs: map[string]string{
 					"xp": xp(r.URL.Query()["username"][0]),
