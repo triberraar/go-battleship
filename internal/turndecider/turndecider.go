@@ -16,6 +16,7 @@ type TurnDecider struct {
 	clients            map[string]*client.Client
 	endTimer           *SecondsTimer
 	duration           int
+	stop               chan string
 }
 
 type SecondsTimer struct {
@@ -27,7 +28,7 @@ func (s *SecondsTimer) TimeRemaining() time.Duration {
 	return s.end.Sub(time.Now())
 }
 
-func NewTurnDecider(maxPlayers int, duration int) *TurnDecider {
+func NewTurnDecider(maxPlayers int, duration int, stop chan string) *TurnDecider {
 	td := TurnDecider{
 		maxPlayers:         maxPlayers,
 		currentPlayerIndex: 0,
@@ -35,8 +36,8 @@ func NewTurnDecider(maxPlayers int, duration int) *TurnDecider {
 		waitTimer:          nil,
 		clients:            make(map[string]*client.Client),
 		duration:           duration,
+		stop:               stop,
 	}
-	td.resetEndTimer()
 	return &td
 }
 
@@ -125,7 +126,9 @@ func (td *TurnDecider) resetEndTimer() {
 		for _, c := range td.clients {
 			c.OutMessages <- messages.NewCancelledMessage()
 		}
-		// shutdown server
+		log.Println("sending timeout sig")
+		td.stop <- "timeout"
+		log.Println("sent timeout sig")
 	})
 	td.endTimer = &SecondsTimer{endTimer, time.Now().Add(d)}
 }

@@ -25,9 +25,46 @@ spec:
 apiVersion: 'autoscaling.agones.dev/v1'
 kind: FleetAutoscaler
 metadata:
-  name: autoscaler
+  name: rps
 spec:
   fleetName: rps
+  policy:
+    type: Buffer
+    buffer:
+      bufferSize: 2
+      minReplicas: 0
+      maxReplicas: 10
+---
+apiVersion: 'agones.dev/v1'
+kind: Fleet
+metadata:
+  name: battleship
+spec:
+  replicas: 2
+  template:
+    spec:
+      ports:
+        - name: default
+          containerPort: 10012
+      template:
+        spec:
+          containers:
+            - name: battleship
+              image: triberraar/battleship:latest
+              resources:
+                requests:
+                  memory: '64Mi'
+                  cpu: '20m'
+                limits:
+                  memory: '64Mi'
+                  cpu: '20m'
+---
+apiVersion: 'autoscaling.agones.dev/v1'
+kind: FleetAutoscaler
+metadata:
+  name: battleship
+spec:
+  fleetName: battleship
   policy:
     type: Buffer
     buffer:

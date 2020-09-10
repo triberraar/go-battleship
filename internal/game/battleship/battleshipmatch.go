@@ -15,10 +15,11 @@ type BattleshipMatch struct {
 	battleships map[string]*Battleship
 	clients     map[string]*client.Client
 	turnDecider *turndecider.TurnDecider
+	stop        chan string
 }
 
-func NewBattleshipMatch(maxPlayers int) *BattleshipMatch {
-	bm := BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers, turnDuration)}
+func NewBattleshipMatch(maxPlayers int, stop chan string) *BattleshipMatch {
+	bm := BattleshipMatch{uuid.New(), make(map[string]*Battleship), make(map[string]*client.Client), turndecider.NewTurnDecider(maxPlayers, turnDuration, stop), stop}
 	return &bm
 }
 
@@ -59,6 +60,7 @@ func (bm *BattleshipMatch) Join(client *client.Client) {
 
 	}(bm.clients[client.Username].InMessages)
 	go bm.processGameMessages(bm.battleships[client.Username].OutMessages, client.Username)
+
 }
 
 func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username string) {
@@ -77,7 +79,6 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 			for _, bs := range bm.battleships {
 				close(bs.OutMessages)
 			}
-			// close server
 		case messages.ShipDestroyedMessage:
 			for _, c := range bm.clients {
 				if bm.turnDecider.IsCurrentPlayer(c.Username) {
@@ -96,6 +97,7 @@ func (bm *BattleshipMatch) processGameMessages(c chan interface{}, username stri
 		}
 	}
 	log.Printf("stopped processing game messages for %s", username)
+	bm.stop <- "finished"
 }
 
 func (bm BattleshipMatch) Rejoin(client *client.Client) {

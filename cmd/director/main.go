@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strings"
 	"time"
 
 	"open-match.dev/open-match/pkg/pb"
@@ -26,8 +25,88 @@ const (
 	openMatchMatchmakingPort int32 = 50502
 )
 
+type Prof struct {
+	name         string
+	matchProfile *pb.MatchProfile
+	fleet        string
+}
+
+func initBattleshipNoobProfile(name string) Prof {
+	pool := pb.Pool{
+		Name:              name,
+		TagPresentFilters: []*pb.TagPresentFilter{{Tag: "battleship"}},
+		StringEqualsFilters: []*pb.StringEqualsFilter{
+			{
+				StringArg: "xp",
+				Value:     "noob",
+			},
+		},
+	}
+	pools := []*pb.Pool{&pool}
+	profile := &pb.MatchProfile{
+		Name:  name,
+		Pools: pools,
+	}
+	return Prof{
+		name,
+		profile,
+		"battleship",
+	}
+}
+
+func initBattleshipMasterProfile(name string) Prof {
+	pool := pb.Pool{
+		Name:              name,
+		TagPresentFilters: []*pb.TagPresentFilter{{Tag: "battleship"}},
+		StringEqualsFilters: []*pb.StringEqualsFilter{
+			{
+				StringArg: "xp",
+				Value:     "master",
+			},
+		},
+	}
+	pools := []*pb.Pool{&pool}
+	profile := &pb.MatchProfile{
+		Name:  name,
+		Pools: pools,
+	}
+	return Prof{
+		name,
+		profile,
+		"battleship",
+	}
+}
+
+func initrpsProfile(name string) Prof {
+	pool := pb.Pool{
+		Name:              name,
+		TagPresentFilters: []*pb.TagPresentFilter{{Tag: "rps"}},
+	}
+	pools := []*pb.Pool{&pool}
+	profile := &pb.MatchProfile{
+		Name:  name,
+		Pools: pools,
+	}
+	return Prof{
+		name,
+		profile,
+		"rps",
+	}
+}
+
+func initProfiles() map[string]Prof {
+	result := make(map[string]Prof)
+	result["battleship_noob"] = initBattleshipNoobProfile("battleship_noob")
+	result["battleship_master"] = initBattleshipMasterProfile("battleship_master")
+	result["rps"] = initrpsProfile("rps")
+	return result
+}
+
+var profiles map[string]Prof
+
 func main() {
 	log.Println("Director doing directoring")
+	profiles = initProfiles()
 
 	agonesClient := createAgonesClient()
 
@@ -60,46 +139,12 @@ func run(agonesClient *versioned.Clientset) error {
 	defer conn.Close()
 	bc := pb.NewBackendServiceClient(conn)
 
-	// bc.FetchMatches(context.Background(), fetchMatchesRequest())
 	fetchMatches(bc, agonesClient)
 
 	return nil
 }
 
 func fetchMatches(bc pb.BackendServiceClient, agonesClient *versioned.Clientset) {
-	var profiles []*pb.MatchProfile
-	// games := []string{"battleships", "rps"}
-	xps := []string{"noob", "master"}
-	// for _, game := range games {
-	for _, xp := range xps {
-		var pools []*pb.Pool
-		pools = append(pools, &pb.Pool{
-			Name:              fmt.Sprintf("pool_%s_%s", "battleships", xp),
-			TagPresentFilters: []*pb.TagPresentFilter{{Tag: "battleships"}},
-			StringEqualsFilters: []*pb.StringEqualsFilter{
-				{
-					StringArg: "xp",
-					Value:     xp,
-				},
-			},
-		})
-		profiles = append(profiles, &pb.MatchProfile{
-			Name:  fmt.Sprintf("Profile_%s_%s", "battleships", xp),
-			Pools: pools,
-		})
-		// }
-	}
-
-	var pools []*pb.Pool
-	pools = append(pools, &pb.Pool{
-		Name:              fmt.Sprintf("pool_%s_%s", "rps", "blaat"),
-		TagPresentFilters: []*pb.TagPresentFilter{{Tag: "rps"}},
-	})
-	profiles = append(profiles, &pb.MatchProfile{
-		Name:  fmt.Sprintf("Profile_%s_%s", "rps", "blaat"),
-		Pools: pools,
-	})
-
 	// subroutine this stuff
 	for _, p := range profiles {
 
@@ -109,7 +154,7 @@ func fetchMatches(bc pb.BackendServiceClient, agonesClient *versioned.Clientset)
 				Port: openMatchMatchmakingPort,
 				Type: pb.FunctionConfig_GRPC,
 			},
-			Profile: p,
+			Profile: p.matchProfile,
 		}
 
 		stream, err := bc.FetchMatches(context.Background(), req)
@@ -126,7 +171,7 @@ func fetchMatches(bc pb.BackendServiceClient, agonesClient *versioned.Clientset)
 				log.Println("error receiving from stream", err)
 				break
 			}
-			adr, err := adr(resp.Match.MatchProfile, agonesClient)
+			adr, err := allocateGameServer(agonesClient, resp.Match.MatchProfile)
 			if err == nil {
 
 				bc.AssignTickets(context.Background(), createAssignTicketRequest(resp.GetMatch(), adr))
@@ -137,22 +182,12 @@ func fetchMatches(bc pb.BackendServiceClient, agonesClient *versioned.Clientset)
 	}
 }
 
-// hax
-func adr(profile string, agonesClient *versioned.Clientset) (string, error) {
-	if strings.Contains(profile, "rps") {
-		adr, err := allocateGameServer(agonesClient)
-		return adr, err
-	} else {
-		return "localhost:10003", nil
-	}
-}
-
-func allocateGameServer(agonesClient *versioned.Clientset) (string, error) {
+func allocateGameServer(agonesClient *versioned.Clientset, profile string) (string, error) {
 	gsa, err := agonesClient.AllocationV1().GameServerAllocations("default").Create(
 		&allocationv1.GameServerAllocation{
 			Spec: allocationv1.GameServerAllocationSpec{
 				Required: metav1.LabelSelector{
-					MatchLabels: map[string]string{agonesv1.FleetNameLabel: "rps"},
+					MatchLabels: map[string]string{agonesv1.FleetNameLabel: profiles[profile].fleet},
 				},
 			},
 		},
@@ -185,23 +220,5 @@ func createAssignTicketRequest(match *pb.Match, adr string) *pb.AssignTicketsReq
 				},
 			},
 		},
-	}
-}
-
-// my super agones stub
-func getServerFromProfile(profile string) string {
-	splitted := strings.Split(profile, "_")
-	if len(splitted) != 3 {
-		return ""
-	}
-	if splitted[1] == "battleships" && splitted[2] == "noob" {
-		return "localhost:10003"
-	} else if splitted[1] == "battleships" && splitted[2] == "master" {
-		return "localhost:10003"
-	} else if splitted[1] == "rps" {
-		// return "localhost:10012"
-		return "34.91.45.90:10012"
-	} else {
-		return ""
 	}
 }
