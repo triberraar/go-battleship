@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"agones.dev/agones/pkg/sdk"
 	agonesSDK "agones.dev/agones/sdks/go"
 )
 
@@ -57,5 +58,15 @@ func (s *myServer) WaitShutdown() {
 	err := s.Shutdown(ctx)
 	if err != nil {
 		log.Printf("Shutdown request error: %v", err)
+	}
+}
+
+func (s *myServer) watch(gs *sdk.GameServer) {
+	if gs.Status.State == "Allocated" {
+		log.Println("server is allocated")
+		log.Println("some metatdata")
+		for k, v := range gs.ObjectMeta.Labels {
+			log.Printf("%s:%s", k, v)
+		}
 	}
 }

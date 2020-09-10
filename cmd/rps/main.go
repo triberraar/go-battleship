@@ -211,6 +211,10 @@ func main() {
 func (s *myServer) watch(gs *sdk.GameServer) {
 	if gs.Status.State == "Allocated" {
 		log.Println("server is allocated")
+		log.Println("some metatdata")
+		for k, v := range gs.ObjectMeta.Labels {
+			log.Printf("%s:%s", k, v)
+		}
 		go s.cancelGame()
 	}
 }

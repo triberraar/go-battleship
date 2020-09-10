@@ -58,6 +58,8 @@ func main() {
 	agones.Ready()
 	go agonesHealth.doHealth()
 
+	agones.WatchGameServer(server.watch)
+
 	//wait shutdown
 	server.WaitShutdown()
 	<-done

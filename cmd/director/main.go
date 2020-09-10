@@ -183,11 +183,17 @@ func fetchMatches(bc pb.BackendServiceClient, agonesClient *versioned.Clientset)
 }
 
 func allocateGameServer(agonesClient *versioned.Clientset, profile string) (string, error) {
+	labels := make(map[string]string)
+	labels["seed1"] = "seed1"
+	labels["seed2"] = "seed2"
 	gsa, err := agonesClient.AllocationV1().GameServerAllocations("default").Create(
 		&allocationv1.GameServerAllocation{
 			Spec: allocationv1.GameServerAllocationSpec{
 				Required: metav1.LabelSelector{
 					MatchLabels: map[string]string{agonesv1.FleetNameLabel: profiles[profile].fleet},
+				},
+				MetaPatch: allocationv1.MetaPatch{
+					Labels: labels,
 				},
 			},
 		},
