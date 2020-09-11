@@ -14,7 +14,9 @@ import (
 	"agones.dev/agones/pkg/client/clientset/versioned"
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 const (
@@ -119,10 +121,13 @@ func main() {
 }
 
 func createAgonesClient() *versioned.Clientset {
-	config, err := rest.InClusterConfig()
+	// config, err := rest.InClusterConfig()
+
+	config, err := clientcmd.BuildConfigFromFlags("", "./kubernetes/config.yaml")
 	if err != nil {
 		panic(err.Error())
 	}
+
 	agonesClient, err := versioned.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())

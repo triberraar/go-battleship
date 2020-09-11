@@ -123,8 +123,8 @@ spec:
   selector:
     app: battleship
     component: frontend
-  clusterIP: None
-  type: ClusterIP
+  # clusterIP: None
+  type: LoadBalancer
   ports:
     - name: http
       protocol: TCP

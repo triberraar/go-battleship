@@ -5,3 +5,4 @@ static
 game.js
 game.js.map
 dist
+kubernetes/config.yaml
