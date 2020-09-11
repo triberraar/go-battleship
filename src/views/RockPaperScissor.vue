@@ -37,18 +37,18 @@ export default class RPSGame extends Vue {
 
   play(): void {
     console.log('play')
-    fetch(
-      `http://localhost:10002/rps/play?username=${this.userModule.username}`
-    ).then((response) => {
-      response.json().then((data) => {
-        console.log(data)
-        if (data.URL) {
-          this.url = data.URL
-        } else {
-          console.log('no url')
-        }
-      })
-    })
+    fetch(`./rps/play?username=${this.userModule.username}`).then(
+      (response) => {
+        response.json().then((data) => {
+          console.log(data)
+          if (data.URL) {
+            this.url = data.URL
+          } else {
+            console.log('no url')
+          }
+        })
+      }
+    )
   }
 
   doResult(data: Result): void {
