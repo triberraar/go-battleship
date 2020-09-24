@@ -47,7 +47,7 @@ spec:
     spec:
       ports:
         - name: default
-          containerPort: 10012
+          containerPort: 10003
           portPolicy: Dynamic
           protocol: TCP
       template:
